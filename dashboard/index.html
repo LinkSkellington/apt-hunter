@@ -254,7 +254,7 @@ function card(l){
   const tierBadge={'🔥 Must Tour':'<span class="badge b-fire">Must Tour</span>','👍 Strong':'<span class="badge b-gold">Strong</span>','🤔 Backup':'<span class="badge b-blue">Backup</span>'}[l.score_tier]||'';
   const heatBadge=l.heat==='🔥 Hot'?'<span class="badge b-hot">🔥 Hot</span>':l.heat==='🧊 Stale'?'<span class="badge b-ice">Stale</span>':'';
   const n=l.neighborhood||'';
-  const neighPill=n?`<span class="neigh-pill">${n?n.split(' ').map(w=>w[0].toUpperCase()+w.slice(1)).join(' '):'')}</span>`:'';
+  const neighPill=n?`<span class="neigh-pill">${n?(n||'').split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' '):'')}</span>`:'';
   const cm=l.commute_minutes;
   const cmClass=!cm?'':cm<=35?'commute-ok':cm<=45?'commute-warn':'commute-bad';
   const ams=[l.in_unit_laundry&&'Laundry',l.dishwasher&&'Dishwasher',l.parking&&'Parking',l.storage&&'Storage',l.gym&&'Gym'].filter(Boolean);
@@ -290,7 +290,7 @@ function openPanel(id){
   const srcs=Array.isArray(l.source_urls)?l.source_urls:[];
   const primaryUrl=l.primary_url||(srcs.length?srcs[0]:'');
   const n=l.neighborhood||'';
-  const nd=n?n.split(' ').map(w=>w[0].toUpperCase()+w.slice(1)).join(' '):'';
+  const nd=n?(n||'').split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' '):'';
   const viewBtn=primaryUrl
     ?`<a class="view-btn" href="${primaryUrl}" target="_blank" rel="noopener noreferrer">↗ View listing</a>`
     :`<span class="view-btn-muted">No listing URL available</span>`;
