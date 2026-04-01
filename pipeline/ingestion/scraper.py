@@ -213,9 +213,8 @@ def _normalize(item: dict, neighborhood: str) -> Optional[dict]:
 
 def _make_search_url(address: str) -> str:
     import urllib.parse
-    # Use StreetEasy search which actually works
-    q = urllib.parse.quote_plus(address.strip())
-    return f"https://streeteasy.com/for-rent/nyc/query:{q}"
+    q = urllib.parse.quote_plus(address.strip() + " rental NYC")
+    return f"https://www.google.com/search?q={q}"
 def _safe_int(val) -> Optional[int]:
     try:
         return int(float(str(val).replace(",", "")))
