@@ -94,11 +94,21 @@ DIRECT_BUILDING_URLS = [
     # Greenpoint
     ("https://www.greenpointhouseofdetention.com/rentals", "greenpoint",       "Greenpoint Landing"),
     ("https://www.greenpointlanding.com/availability",     "greenpoint",       "Greenpoint Landing"),
-    # Hoboken
+    # Hoboken / Weehawken / Jersey City
     ("https://www.maxwell-place.com/floor-plans",          "hoboken",          "Maxwell Place"),
     ("https://www.urthhoboken.com/availability",           "hoboken",          "Urth Hoboken"),
+    ("https://hudsoncondos.com/rentals",                   "hoboken",          "Hudson Condos"),
+    ("https://search.hudsoncondos.com/idx/search/listings?property_type=Residential+Lease&min_beds=2&max_price=8000", "hoboken", "Hudson Condos IDX"),
     # Red Hook / Columbia St Waterfront
     ("https://www.portlandave.com/availability",           "red hook",         "Portland Ave"),
+]
+
+# ── NJ-focused brokerage search URLs (scraped as direct sites) ────────────────
+# These are added to DIRECT_BUILDING_URLS so they run through the generic extractor.
+# Hudson Realty Group — Hoboken rentals
+DIRECT_BUILDING_URLS += [
+    ("https://hudsonrealtygroup.com/home-search/listings/lp/hoboken-rentals?property_type=Residential+Lease&min_bedrooms=2&max_price=8000", "hoboken", "Hudson Realty Group"),
+    ("https://hudsonrealtygroup.com/home-search/listings?property_type=Residential+Lease&city=Hoboken&min_bedrooms=2&max_price=8000", "hoboken", "Hudson Realty Group"),
 ]
 
 
@@ -115,6 +125,10 @@ def fetch_all_sources(sources=None) -> list[dict]:
         "elliman":          fetch_elliman,
         "bhs":              fetch_bhs,
         "sothebys":         fetch_sothebys,
+        "halstead":         fetch_halstead,
+        "bond":             fetch_bond,
+        "nestseekers":      fetch_nestseekers,
+        "level":            fetch_level,
         "buildings":        fetch_direct_buildings,
         "streeteasy":       fetch_streeteasy,
         "zillow":           fetch_zillow,
@@ -431,6 +445,146 @@ def fetch_sothebys() -> list[dict]:
             results.extend(_extract_next_data(resp.text, "sothebys", "brooklyn"))
     except Exception as e:
         log.warning(f"    Sotheby's failed: {e}")
+    return results
+
+
+# ── Halstead (now Brown Harris Stevens affiliate) ────────────────────────────
+
+def fetch_halstead() -> list[dict]:
+    results = []
+    searches = [
+        ("brooklyn-heights", "brooklyn heights"),
+        ("williamsburg",     "williamsburg"),
+        ("cobble-hill",      "cobble hill"),
+        ("park-slope",       "park slope"),
+        ("dumbo",            "dumbo"),
+        ("hoboken",          "hoboken"),
+    ]
+    for slug, neigh in searches:
+        try:
+            url = f"https://www.halstead.com/rent/ny/brooklyn/{slug}/?beds_min={MIN_BEDS}&baths_min={int(MIN_BATHS)}&price_max={MAX_PRICE}&sqft_min={MIN_SQFT}"
+            resp = SESSION.get(url, headers=HEADERS_BROWSER, timeout=15)
+            if resp.ok:
+                results.extend(_extract_jsonld_listings(resp.text, "halstead", neigh))
+                results.extend(_extract_next_data(resp.text, "halstead", neigh))
+                results.extend(_extract_embedded_json(resp.text, "halstead", neigh))
+            _delay(1, 2)
+        except Exception as e:
+            log.warning(f"    Halstead {slug} failed: {e}")
+    return results
+
+
+# ── BOND New York ─────────────────────────────────────────────────────────────
+
+def fetch_bond() -> list[dict]:
+    results = []
+    try:
+        # BOND has a JSON API for their search
+        url = "https://www.bondnewyork.com/api/listings/search"
+        payload = {
+            "listingType": "rental",
+            "neighborhoods": ["Brooklyn Heights", "Williamsburg", "Cobble Hill", "Park Slope", "Hoboken"],
+            "minBeds": MIN_BEDS,
+            "minBaths": MIN_BATHS,
+            "maxPrice": MAX_PRICE,
+            "minSqft": MIN_SQFT,
+            "page": 1,
+            "perPage": 50,
+        }
+        headers = {**HEADERS_JSON, "Referer": "https://www.bondnewyork.com/"}
+        resp = SESSION.post(url, json=payload, headers=headers, timeout=15)
+        if resp.ok and "json" in resp.headers.get("content-type", ""):
+            data = resp.json()
+            for item in (data.get("listings") or data.get("results") or []):
+                price = _safe_int(item.get("price") or item.get("rent"))
+                address = item.get("address") or item.get("streetAddress") or ""
+                if not price or not address:
+                    continue
+                listing_url = item.get("url") or item.get("listingUrl") or ""
+                if listing_url and not listing_url.startswith("http"):
+                    listing_url = "https://www.bondnewyork.com" + listing_url
+                amenities = [str(a).lower() for a in (item.get("amenities") or [])]
+                results.append({
+                    "source": "bond",
+                    "primary_url": listing_url,
+                    "address": address,
+                    "unit": str(item.get("unit") or ""),
+                    "price": price,
+                    "bedrooms": _safe_int(item.get("bedrooms") or item.get("beds")),
+                    "bathrooms": _safe_float(item.get("bathrooms") or item.get("baths")),
+                    "sqft": _safe_int(item.get("sqft") or item.get("squareFeet")),
+                    "floor": _safe_int(item.get("floor")),
+                    "in_unit_laundry": _has(amenities, ["washer", "laundry"]),
+                    "dishwasher":       _has(amenities, ["dishwasher"]),
+                    "parking":          _has(amenities, ["parking", "garage"]),
+                    "storage":          _has(amenities, ["storage"]),
+                    "gym":              _has(amenities, ["gym", "fitness"]),
+                    "description": (item.get("description") or "")[:2000],
+                    "available_date": item.get("availableDate"),
+                    "neighborhood": (item.get("neighborhood") or "brooklyn").lower(),
+                    "scraped_at": datetime.utcnow().isoformat(),
+                })
+        else:
+            # Fallback: scrape HTML search pages
+            for slug, neigh in [("brooklyn-heights", "brooklyn heights"), ("williamsburg", "williamsburg"), ("hoboken-nj", "hoboken")]:
+                try:
+                    page_url = f"https://www.bondnewyork.com/rent/{slug}/?beds_min={MIN_BEDS}&price_max={MAX_PRICE}"
+                    r = SESSION.get(page_url, headers=HEADERS_BROWSER, timeout=15)
+                    if r.ok:
+                        results.extend(_extract_jsonld_listings(r.text, "bond", neigh))
+                        results.extend(_extract_next_data(r.text, "bond", neigh))
+                    _delay(1, 2)
+                except Exception:
+                    pass
+    except Exception as e:
+        log.warning(f"    BOND failed: {e}")
+    return results
+
+
+# ── Nest Seekers International ────────────────────────────────────────────────
+
+def fetch_nestseekers() -> list[dict]:
+    results = []
+    searches = [
+        ("brooklyn-heights-brooklyn", "brooklyn heights"),
+        ("williamsburg-brooklyn",     "williamsburg"),
+        ("cobble-hill-brooklyn",      "cobble hill"),
+        ("hoboken-new-jersey",        "hoboken"),
+    ]
+    for slug, neigh in searches:
+        try:
+            url = f"https://www.nestseekers.com/Rentals/{slug}?beds={MIN_BEDS}&bath={int(MIN_BATHS)}&pricemax={MAX_PRICE}"
+            resp = SESSION.get(url, headers=HEADERS_BROWSER, timeout=15)
+            if resp.ok:
+                results.extend(_extract_jsonld_listings(resp.text, "nestseekers", neigh))
+                results.extend(_extract_next_data(resp.text, "nestseekers", neigh))
+                results.extend(_extract_embedded_json(resp.text, "nestseekers", neigh))
+            _delay(1, 2)
+        except Exception as e:
+            log.warning(f"    Nest Seekers {slug} failed: {e}")
+    return results
+
+
+# ── Level Group (Brooklyn focused) ────────────────────────────────────────────
+
+def fetch_level() -> list[dict]:
+    results = []
+    try:
+        url = "https://www.levelgroup.com/rentals"
+        params = {
+            "neighborhood": "Brooklyn Heights,Williamsburg,Cobble Hill,Park Slope,DUMBO",
+            "min_beds": MIN_BEDS,
+            "min_baths": int(MIN_BATHS),
+            "max_price": MAX_PRICE,
+            "min_sqft": MIN_SQFT,
+        }
+        resp = SESSION.get(url, params=params, headers=HEADERS_BROWSER, timeout=15)
+        if resp.ok:
+            results.extend(_extract_jsonld_listings(resp.text, "level", "brooklyn"))
+            results.extend(_extract_next_data(resp.text, "level", "brooklyn"))
+            results.extend(_extract_embedded_json(resp.text, "level", "brooklyn"))
+    except Exception as e:
+        log.warning(f"    Level Group failed: {e}")
     return results
 
 
