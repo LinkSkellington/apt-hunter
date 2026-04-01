@@ -1,13 +1,19 @@
 """
 ingestion/scraper.py
 
-Uses direct HTTP requests with realistic headers instead of Playwright.
-Much more reliable in GitHub Actions — no browser installation needed.
+HTTP-based scraper targeting:
+  - Corcoran         (corcoran.com)
+  - Compass          (compass.com)
+  - Douglas Elliman  (elliman.com)
+  - Brown Harris Stevens (bhsusa.com)
+  - Sotheby's NY     (sothebysrealty.com)
+  - Direct building sites (extendable list)
+  - StreetEasy       (JSON/HTML fallback)
+  - Zillow           (JSON API)
+  - Redfin           (JSON API)
 
-Sources:
-  - StreetEasy  (JSON API + HTML fallback)
-  - Zillow      (JSON search API)
-  - Redfin      (JSON API)
+All sites use HTTP requests only — no browser needed.
+Add new building URLs to DIRECT_BUILDING_URLS at the bottom.
 """
 
 import json
@@ -19,18 +25,47 @@ from datetime import datetime
 from typing import Optional
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 log = logging.getLogger(__name__)
 
-SESSION = requests.Session()
-SESSION.headers.update({
+# ── Session with retry logic ──────────────────────────────────────────────────
+def _make_session() -> requests.Session:
+    s = requests.Session()
+    retry = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
+    s.mount("https://", HTTPAdapter(max_retries=retry))
+    s.mount("http://",  HTTPAdapter(max_retries=retry))
+    return s
+
+SESSION = _make_session()
+
+HEADERS_BROWSER = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br",
     "Connection": "keep-alive",
-})
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+}
 
+HEADERS_JSON = {
+    **HEADERS_BROWSER,
+    "Accept": "application/json, text/plain, */*",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+}
+
+# ── Criteria constants ────────────────────────────────────────────────────────
+MAX_PRICE  = 8000
+MIN_BEDS   = 2
+MIN_BATHS  = 2.0
+MIN_SQFT   = 1200
+
+# ── Neighborhood slugs for StreetEasy ────────────────────────────────────────
 STREETEASY_AREAS = [
     ("brooklyn-heights", "brooklyn heights"),
     ("williamsburg",     "williamsburg"),
@@ -43,139 +78,460 @@ STREETEASY_AREAS = [
     ("boerum-hill",      "boerum hill"),
 ]
 
-ZILLOW_SEARCHES = [
-    {
-        "label": "brooklyn",
-        "searchQueryState": {
-            "pagination": {},
-            "usersSearchTerm": "Brooklyn, NY",
-            "mapBounds": {"west": -74.0479, "east": -73.8765, "south": 40.5771, "north": 40.7396},
-            "filterState": {
-                "fr": {"value": True}, "fsba": {"value": False}, "fsbo": {"value": False},
-                "nc": {"value": False}, "cmsn": {"value": False}, "auc": {"value": False},
-                "fore": {"value": False}, "mp": {"max": 8000}, "beds": {"min": 2},
-            },
-            "isListVisible": True, "isMapVisible": False,
-        }
-    },
-    {
-        "label": "hoboken",
-        "searchQueryState": {
-            "pagination": {},
-            "usersSearchTerm": "Hoboken, NJ",
-            "mapBounds": {"west": -74.0700, "east": -74.0100, "south": 40.7300, "north": 40.7700},
-            "filterState": {
-                "fr": {"value": True}, "fsba": {"value": False}, "fsbo": {"value": False},
-                "mp": {"max": 8000}, "beds": {"min": 2},
-            },
-            "isListVisible": True, "isMapVisible": False,
-        }
-    },
+# ── Direct building/development websites ─────────────────────────────────────
+# Format: (url, neighborhood, building_name)
+# Add any building or development site here — the generic scraper will
+# extract price/bed/bath from JSON-LD or visible text automatically.
+DIRECT_BUILDING_URLS = [
+    # Williamsburg
+    ("https://www.theoostenwilliamsburg.com/availability", "williamsburg", "The Oosten"),
+    ("https://www.northsidepiers.com/availability",        "williamsburg", "Northside Piers"),
+    ("https://www.viawilliamsburg.com/apartments",         "williamsburg", "Via Williamsburg"),
+    # Dumbo / Brooklyn Heights
+    ("https://www.onebrooklynbridge.com/availability",     "brooklyn heights", "One Brooklyn Bridge Park"),
+    ("https://www.1johnstreet.com/residences",             "dumbo",            "1 John Street"),
+    ("https://www.clocktowerbuilding.com/rentals",         "dumbo",            "Clock Tower"),
+    # Greenpoint
+    ("https://www.greenpointhouseofdetention.com/rentals", "greenpoint",       "Greenpoint Landing"),
+    ("https://www.greenpointlanding.com/availability",     "greenpoint",       "Greenpoint Landing"),
+    # Hoboken
+    ("https://www.maxwell-place.com/floor-plans",          "hoboken",          "Maxwell Place"),
+    ("https://www.urthhoboken.com/availability",           "hoboken",          "Urth Hoboken"),
+    # Red Hook / Columbia St Waterfront
+    ("https://www.portlandave.com/availability",           "red hook",         "Portland Ave"),
 ]
 
 
+# ── Public entry point ────────────────────────────────────────────────────────
+
 def fetch_all_sources(sources=None) -> list[dict]:
-    targets = sources or ["streeteasy", "zillow", "redfin"]
+    """
+    Run all scrapers. sources can be a list to limit which run.
+    Returns flat list of normalized listing dicts.
+    """
+    all_targets = {
+        "corcoran":         fetch_corcoran,
+        "compass":          fetch_compass,
+        "elliman":          fetch_elliman,
+        "bhs":              fetch_bhs,
+        "sothebys":         fetch_sothebys,
+        "buildings":        fetch_direct_buildings,
+        "streeteasy":       fetch_streeteasy,
+        "zillow":           fetch_zillow,
+        "redfin":           fetch_redfin,
+    }
+    targets = sources or list(all_targets.keys())
     all_listings = []
+
     for source in targets:
+        fn = all_targets.get(source)
+        if not fn:
+            log.warning(f"  Unknown source: {source}")
+            continue
         try:
             log.info(f"  Fetching from {source}...")
-            if source == "streeteasy":
-                listings = fetch_streeteasy()
-            elif source == "zillow":
-                listings = fetch_zillow()
-            elif source == "redfin":
-                listings = fetch_redfin()
-            else:
-                listings = []
+            listings = fn()
             log.info(f"  -> {len(listings)} listings from {source}")
             all_listings.extend(listings)
         except Exception as e:
             log.error(f"  Source {source} failed: {e}")
+
     return all_listings
 
+
+# ── Corcoran ──────────────────────────────────────────────────────────────────
+
+def fetch_corcoran() -> list[dict]:
+    """
+    Corcoran exposes a JSON search API used by their website.
+    Endpoint discovered via browser network inspection.
+    """
+    results = []
+    neighborhoods = [
+        "Brooklyn Heights", "Williamsburg", "Cobble Hill", "Red Hook",
+        "Greenpoint", "Park Slope", "DUMBO", "Carroll Gardens", "Boerum Hill",
+    ]
+    for neigh in neighborhoods:
+        try:
+            url = "https://www.corcoran.com/api/search/listings"
+            payload = {
+                "searchType": "rentals",
+                "neighborhoods": [neigh],
+                "bedrooms": {"min": MIN_BEDS},
+                "bathrooms": {"min": MIN_BATHS},
+                "price": {"max": MAX_PRICE},
+                "squareFeet": {"min": MIN_SQFT},
+                "borough": "Brooklyn",
+                "sortBy": "listingDate",
+                "sortOrder": "desc",
+                "page": 1,
+                "pageSize": 50,
+            }
+            headers = {
+                **HEADERS_JSON,
+                "Referer": "https://www.corcoran.com/",
+                "Origin": "https://www.corcoran.com",
+            }
+            resp = SESSION.post(url, json=payload, headers=headers, timeout=15)
+            if resp.ok and "application/json" in resp.headers.get("content-type", ""):
+                data = resp.json()
+                listings = data.get("listings") or data.get("results") or data.get("data") or []
+                for item in listings:
+                    n = _normalize_corcoran(item, neigh.lower())
+                    if n:
+                        results.append(n)
+            else:
+                # Fallback: scrape the search results page
+                page_url = f"https://www.corcoran.com/homes-for-rent/in-{neigh.lower().replace(' ', '-')}/price_max-8000/beds_min-2/baths_min-2"
+                resp2 = SESSION.get(page_url, headers=HEADERS_BROWSER, timeout=15)
+                if resp2.ok:
+                    results.extend(_extract_jsonld_listings(resp2.text, "corcoran", neigh.lower()))
+                    results.extend(_extract_next_data(resp2.text, "corcoran", neigh.lower()))
+            _delay(1, 3)
+        except Exception as e:
+            log.warning(f"    Corcoran {neigh} failed: {e}")
+    return results
+
+
+def _normalize_corcoran(item: dict, neighborhood: str) -> Optional[dict]:
+    price = _safe_int(item.get("price") or item.get("listPrice") or item.get("rentalPrice"))
+    if not price:
+        return None
+    address = (
+        item.get("address", {}).get("full") or
+        item.get("address", {}).get("street") or
+        item.get("streetAddress") or ""
+    )
+    if not address:
+        return None
+    url = item.get("url") or item.get("listingUrl") or ""
+    if url and not url.startswith("http"):
+        url = "https://www.corcoran.com" + url
+    amenities = [str(a).lower() for a in (item.get("amenities") or [])]
+    return {
+        "source": "corcoran",
+        "primary_url": url,
+        "address": address,
+        "unit": str(item.get("unit") or item.get("unitNumber") or ""),
+        "price": price,
+        "bedrooms": _safe_int(item.get("bedrooms") or item.get("beds")),
+        "bathrooms": _safe_float(item.get("bathrooms") or item.get("baths")),
+        "sqft": _safe_int(item.get("squareFeet") or item.get("sqft")),
+        "floor": _safe_int(item.get("floor")),
+        "in_unit_laundry": _has(amenities, ["washer", "laundry in unit", "w/d"]),
+        "dishwasher":       _has(amenities, ["dishwasher"]),
+        "parking":          _has(amenities, ["parking", "garage"]),
+        "storage":          _has(amenities, ["storage"]),
+        "gym":              _has(amenities, ["gym", "fitness"]),
+        "description": (item.get("description") or "")[:2000],
+        "available_date": item.get("availableDate") or item.get("availableOn"),
+        "neighborhood": neighborhood,
+        "building_name": item.get("buildingName") or item.get("building", {}).get("name", ""),
+        "scraped_at": datetime.utcnow().isoformat(),
+    }
+
+
+# ── Compass ───────────────────────────────────────────────────────────────────
+
+def fetch_compass() -> list[dict]:
+    results = []
+    # Compass GraphQL endpoint used by their website
+    neighborhoods_ids = {
+        "brooklyn heights": "5a87f54b7d95824a060eb2a5",
+        "williamsburg":     "5a87f5487d95824a060eb267",
+        "cobble hill":      "5a87f5507d95824a060eb2e3",
+        "park slope":       "5a87f5507d95824a060eb2e7",
+        "greenpoint":       "5a87f5517d95824a060eb2f1",
+        "dumbo":            "5a87f54c7d95824a060eb2b3",
+    }
+    for neigh_name, neigh_id in neighborhoods_ids.items():
+        try:
+            # Try the Compass search API
+            url = "https://www.compass.com/api/v1/search/listings"
+            params = {
+                "q": neigh_name + " brooklyn",
+                "type": "rental",
+                "min_beds": MIN_BEDS,
+                "max_price": MAX_PRICE,
+                "min_sqft": MIN_SQFT,
+                "sort": "newest",
+                "page": 1,
+                "limit": 50,
+            }
+            headers = {**HEADERS_JSON, "Referer": "https://www.compass.com/"}
+            resp = SESSION.get(url, params=params, headers=headers, timeout=15)
+            if resp.ok and "json" in resp.headers.get("content-type", ""):
+                data = resp.json()
+                listings = data.get("listings") or data.get("results") or []
+                for item in listings:
+                    n = _normalize_compass(item, neigh_name)
+                    if n:
+                        results.append(n)
+            else:
+                # Fallback: scrape HTML
+                page_url = f"https://www.compass.com/for-rent/{neigh_name.replace(' ', '-')}-brooklyn-ny/price_max={MAX_PRICE}/beds_min={MIN_BEDS}/"
+                resp2 = SESSION.get(page_url, headers=HEADERS_BROWSER, timeout=15)
+                if resp2.ok:
+                    results.extend(_extract_jsonld_listings(resp2.text, "compass", neigh_name))
+                    results.extend(_extract_next_data(resp2.text, "compass", neigh_name))
+            _delay(1, 3)
+        except Exception as e:
+            log.warning(f"    Compass {neigh_name} failed: {e}")
+    return results
+
+
+def _normalize_compass(item: dict, neighborhood: str) -> Optional[dict]:
+    price = _safe_int(item.get("price") or item.get("listPrice"))
+    if not price:
+        return None
+    address = item.get("address") or item.get("streetAddress") or ""
+    url = item.get("url") or item.get("detailUrl") or ""
+    if url and not url.startswith("http"):
+        url = "https://www.compass.com" + url
+    amenities = [str(a).lower() for a in (item.get("amenities") or [])]
+    return {
+        "source": "compass",
+        "primary_url": url,
+        "address": address,
+        "unit": str(item.get("unit") or ""),
+        "price": price,
+        "bedrooms": _safe_int(item.get("bedrooms") or item.get("beds")),
+        "bathrooms": _safe_float(item.get("bathrooms") or item.get("baths")),
+        "sqft": _safe_int(item.get("squareFeet") or item.get("sqft") or item.get("livingArea")),
+        "floor": _safe_int(item.get("floor")),
+        "in_unit_laundry": _has(amenities, ["washer", "laundry"]),
+        "dishwasher":       _has(amenities, ["dishwasher"]),
+        "parking":          _has(amenities, ["parking", "garage"]),
+        "storage":          _has(amenities, ["storage"]),
+        "gym":              _has(amenities, ["gym", "fitness"]),
+        "description": (item.get("description") or "")[:2000],
+        "available_date": item.get("availableDate"),
+        "neighborhood": neighborhood,
+        "building_name": item.get("buildingName", ""),
+        "scraped_at": datetime.utcnow().isoformat(),
+    }
+
+
+# ── Douglas Elliman ───────────────────────────────────────────────────────────
+
+def fetch_elliman() -> list[dict]:
+    results = []
+    search_urls = [
+        ("https://www.elliman.com/new-york/rentals/search#location=Brooklyn+Heights,Brooklyn,NY&price_max=8000&bedrooms_min=2&bathrooms_min=2&sqft_min=1200", "brooklyn heights"),
+        ("https://www.elliman.com/new-york/rentals/search#location=Williamsburg,Brooklyn,NY&price_max=8000&bedrooms_min=2", "williamsburg"),
+        ("https://www.elliman.com/new-york/rentals/search#location=Cobble+Hill,Brooklyn,NY&price_max=8000&bedrooms_min=2", "cobble hill"),
+        ("https://www.elliman.com/new-york/rentals/search#location=Park+Slope,Brooklyn,NY&price_max=8000&bedrooms_min=2", "park slope"),
+        ("https://www.elliman.com/new-york/rentals/search#location=Hoboken,NJ&price_max=8000&bedrooms_min=2", "hoboken"),
+    ]
+    # Try Elliman's internal API first
+    for page_url, neigh in search_urls:
+        try:
+            api_url = "https://www.elliman.com/api/search/listings"
+            payload = {
+                "listingType": "rental",
+                "location": neigh,
+                "priceMax": MAX_PRICE,
+                "bedsMin": MIN_BEDS,
+                "bathsMin": MIN_BATHS,
+                "sqftMin": MIN_SQFT,
+                "sortBy": "listDate",
+                "page": 1,
+                "pageSize": 48,
+            }
+            headers = {**HEADERS_JSON, "Referer": "https://www.elliman.com/"}
+            resp = SESSION.post(api_url, json=payload, headers=headers, timeout=15)
+            if resp.ok and "json" in resp.headers.get("content-type", ""):
+                data = resp.json()
+                listings = data.get("listings") or data.get("properties") or data.get("results") or []
+                for item in listings:
+                    n = _normalize_elliman(item, neigh)
+                    if n:
+                        results.append(n)
+            else:
+                resp2 = SESSION.get(page_url, headers=HEADERS_BROWSER, timeout=15)
+                if resp2.ok:
+                    results.extend(_extract_jsonld_listings(resp2.text, "elliman", neigh))
+                    results.extend(_extract_next_data(resp2.text, "elliman", neigh))
+            _delay(1, 3)
+        except Exception as e:
+            log.warning(f"    Elliman {neigh} failed: {e}")
+    return results
+
+
+def _normalize_elliman(item: dict, neighborhood: str) -> Optional[dict]:
+    price = _safe_int(item.get("price") or item.get("listPrice") or item.get("rentalPrice"))
+    if not price:
+        return None
+    address = item.get("address") or item.get("streetAddress") or item.get("displayAddress") or ""
+    url = item.get("url") or item.get("listingUrl") or ""
+    if url and not url.startswith("http"):
+        url = "https://www.elliman.com" + url
+    amenities = [str(a).lower() for a in (item.get("amenities") or [])]
+    return {
+        "source": "elliman",
+        "primary_url": url,
+        "address": address,
+        "unit": str(item.get("unit") or item.get("aptNumber") or ""),
+        "price": price,
+        "bedrooms": _safe_int(item.get("bedrooms") or item.get("beds")),
+        "bathrooms": _safe_float(item.get("bathrooms") or item.get("baths")),
+        "sqft": _safe_int(item.get("squareFeet") or item.get("sqft")),
+        "floor": _safe_int(item.get("floor")),
+        "in_unit_laundry": _has(amenities, ["washer", "laundry"]),
+        "dishwasher":       _has(amenities, ["dishwasher"]),
+        "parking":          _has(amenities, ["parking", "garage"]),
+        "storage":          _has(amenities, ["storage"]),
+        "gym":              _has(amenities, ["gym", "fitness"]),
+        "description": (item.get("description") or item.get("remarks") or "")[:2000],
+        "available_date": item.get("availableDate") or item.get("availableOn"),
+        "neighborhood": neighborhood,
+        "building_name": item.get("buildingName") or item.get("building") or "",
+        "scraped_at": datetime.utcnow().isoformat(),
+    }
+
+
+# ── Brown Harris Stevens ──────────────────────────────────────────────────────
+
+def fetch_bhs() -> list[dict]:
+    results = []
+    neighborhoods = [
+        "Brooklyn Heights", "Williamsburg", "Cobble Hill",
+        "Park Slope", "DUMBO", "Greenpoint", "Red Hook",
+    ]
+    for neigh in neighborhoods:
+        try:
+            # BHS search page with filters in URL
+            url = f"https://www.bhsusa.com/rentals/search?neighborhood={neigh.replace(' ', '+')}&price_max={MAX_PRICE}&bedrooms_min={MIN_BEDS}&bathrooms_min={int(MIN_BATHS)}&borough=Brooklyn"
+            resp = SESSION.get(url, headers=HEADERS_BROWSER, timeout=15)
+            if resp.ok:
+                results.extend(_extract_jsonld_listings(resp.text, "bhs", neigh.lower()))
+                results.extend(_extract_next_data(resp.text, "bhs", neigh.lower()))
+                results.extend(_extract_embedded_json(resp.text, "bhs", neigh.lower()))
+            _delay(1, 2)
+        except Exception as e:
+            log.warning(f"    BHS {neigh} failed: {e}")
+    return results
+
+
+# ── Sotheby's International Realty NY ────────────────────────────────────────
+
+def fetch_sothebys() -> list[dict]:
+    results = []
+    try:
+        url = "https://www.sothebysrealty.com/eng/rentals/new-york-city-new-york-usa"
+        params = {
+            "pr": f"0-{MAX_PRICE}",
+            "bd": f"{MIN_BEDS}-",
+            "ba": f"{int(MIN_BATHS)}-",
+            "sf": f"{MIN_SQFT}-",
+        }
+        resp = SESSION.get(url, params=params, headers=HEADERS_BROWSER, timeout=15)
+        if resp.ok:
+            results.extend(_extract_jsonld_listings(resp.text, "sothebys", "brooklyn"))
+            results.extend(_extract_next_data(resp.text, "sothebys", "brooklyn"))
+    except Exception as e:
+        log.warning(f"    Sotheby's failed: {e}")
+    return results
+
+
+# ── Direct building websites ──────────────────────────────────────────────────
+
+def fetch_direct_buildings() -> list[dict]:
+    """
+    Scrape individual building/development websites.
+    Uses JSON-LD, __NEXT_DATA__, and text pattern extraction.
+    Add new buildings to DIRECT_BUILDING_URLS at top of file.
+    """
+    results = []
+    for url, neighborhood, building_name in DIRECT_BUILDING_URLS:
+        try:
+            resp = SESSION.get(url, headers=HEADERS_BROWSER, timeout=15)
+            if not resp.ok:
+                log.debug(f"    Building {building_name} returned {resp.status_code}")
+                continue
+
+            html = resp.text
+            extracted = []
+            extracted.extend(_extract_jsonld_listings(html, "direct", neighborhood))
+            extracted.extend(_extract_next_data(html, "direct", neighborhood))
+            extracted.extend(_extract_embedded_json(html, "direct", neighborhood))
+            extracted.extend(_extract_text_listings(html, "direct", neighborhood))
+
+            # Tag all with building name
+            for item in extracted:
+                item["building_name"] = building_name
+                item["primary_url"] = item.get("primary_url") or url
+
+            log.debug(f"    {building_name}: {len(extracted)} listings")
+            results.extend(extracted)
+            _delay(1, 2)
+
+        except Exception as e:
+            log.debug(f"    Building {building_name} failed: {e}")
+
+    return results
+
+
+# ── StreetEasy ────────────────────────────────────────────────────────────────
 
 def fetch_streeteasy() -> list[dict]:
     results = []
     for area_slug, area_name in STREETEASY_AREAS:
         try:
             url = f"https://streeteasy.com/for-rent/{area_slug}"
-            params = {"price": "-8000", "beds": "2", "baths": "2", "size": "1200"}
-            headers = {**SESSION.headers, "Referer": "https://streeteasy.com/", "Accept": "text/html,application/xhtml+xml"}
-            resp = SESSION.get(url, params=params, headers=headers, timeout=15)
+            params = {"price": f"-{MAX_PRICE}", "beds": str(MIN_BEDS), "baths": str(int(MIN_BATHS)), "size": str(MIN_SQFT)}
+            resp = SESSION.get(url, params=params, headers=HEADERS_BROWSER, timeout=15)
             if resp.ok:
-                extracted = _extract_jsonld_listings(resp.text, "streeteasy", area_name)
-                extracted += _extract_se_next_data(resp.text, area_name)
-                results.extend(extracted)
+                results.extend(_extract_next_data(resp.text, "streeteasy", area_name))
+                results.extend(_extract_jsonld_listings(resp.text, "streeteasy", area_name))
             _delay(2, 4)
         except Exception as e:
             log.warning(f"    StreetEasy {area_slug} failed: {e}")
     return results
 
 
-def _extract_se_next_data(html: str, area_name: str) -> list[dict]:
-    results = []
-    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.DOTALL)
-    if not m:
-        return results
-    try:
-        data = json.loads(m.group(1))
-        listings = (
-            data.get("props", {}).get("pageProps", {}).get("listings", []) or
-            data.get("props", {}).get("pageProps", {}).get("searchResults", {}).get("listings", [])
-        )
-        for item in listings:
-            price = _safe_int(item.get("price") or item.get("rent"))
-            address = item.get("address") or item.get("building_address") or ""
-            if not price or not address:
-                continue
-            amenities = [str(a).lower() for a in (item.get("amenities") or [])]
-            results.append({
-                "source": "streeteasy",
-                "primary_url": f"https://streeteasy.com{item.get('url', '')}",
-                "address": address,
-                "unit": str(item.get("unit") or ""),
-                "price": price,
-                "bedrooms": _safe_int(item.get("bedrooms") or item.get("beds")),
-                "bathrooms": _safe_float(item.get("bathrooms") or item.get("baths")),
-                "sqft": _safe_int(item.get("sqft") or item.get("square_footage")),
-                "floor": _safe_int(item.get("floor")),
-                "in_unit_laundry": any(k in amenities for k in ["washer/dryer", "laundry in unit", "w/d"]),
-                "dishwasher": "dishwasher" in amenities,
-                "parking": any(k in amenities for k in ["parking", "garage"]),
-                "storage": "storage" in amenities,
-                "gym": any(k in amenities for k in ["gym", "fitness"]),
-                "description": item.get("description", "")[:2000],
-                "available_date": item.get("available_at") or item.get("available_date"),
-                "neighborhood": area_name,
-                "scraped_at": datetime.utcnow().isoformat(),
-            })
-    except Exception as e:
-        log.debug(f"    SE __NEXT_DATA__ parse failed: {e}")
-    return results
-
+# ── Zillow ────────────────────────────────────────────────────────────────────
 
 def fetch_zillow() -> list[dict]:
     results = []
-    for search in ZILLOW_SEARCHES:
+    searches = [
+        ("brooklyn", {
+            "usersSearchTerm": "Brooklyn, NY",
+            "mapBounds": {"west": -74.0479, "east": -73.8765, "south": 40.5771, "north": 40.7396},
+        }),
+        ("hoboken", {
+            "usersSearchTerm": "Hoboken, NJ",
+            "mapBounds": {"west": -74.0700, "east": -74.0100, "south": 40.7300, "north": 40.7700},
+        }),
+    ]
+    for label, extra in searches:
         try:
-            headers = {**SESSION.headers, "Referer": "https://www.zillow.com/", "Accept": "application/json"}
+            state = {
+                **extra,
+                "pagination": {},
+                "filterState": {
+                    "fr":   {"value": True}, "fsba": {"value": False}, "fsbo": {"value": False},
+                    "nc":   {"value": False}, "cmsn": {"value": False}, "auc":  {"value": False},
+                    "fore": {"value": False}, "mp":   {"max": MAX_PRICE}, "beds": {"min": MIN_BEDS},
+                },
+                "isListVisible": True, "isMapVisible": False,
+            }
             params = {
-                "searchQueryState": json.dumps(search["searchQueryState"]),
+                "searchQueryState": json.dumps(state),
                 "wants": json.dumps({"cat1": ["listResults"]}),
                 "requestId": 2,
             }
+            headers = {**HEADERS_JSON, "Referer": "https://www.zillow.com/"}
             resp = SESSION.get("https://www.zillow.com/search/GetSearchPageState.htm", params=params, headers=headers, timeout=20)
             if resp.ok:
-                data = resp.json()
-                items = data.get("cat1", {}).get("searchResults", {}).get("listResults", [])
+                items = resp.json().get("cat1", {}).get("searchResults", {}).get("listResults", [])
                 for item in items:
-                    n = _normalize_zillow(item, search["label"])
+                    n = _normalize_zillow(item, label)
                     if n:
                         results.append(n)
             _delay(2, 4)
         except Exception as e:
-            log.warning(f"    Zillow {search['label']} failed: {e}")
+            log.warning(f"    Zillow {label} failed: {e}")
     return results
 
 
@@ -187,10 +543,8 @@ def _normalize_zillow(item: dict, neighborhood: str) -> Optional[dict]:
     if url and not url.startswith("http"):
         url = "https://www.zillow.com" + url
     return {
-        "source": "zillow",
-        "primary_url": url,
-        "address": item.get("address", ""),
-        "unit": item.get("unit", ""),
+        "source": "zillow", "primary_url": url,
+        "address": item.get("address", ""), "unit": item.get("unit", ""),
         "price": price,
         "bedrooms": _safe_int(item.get("beds")),
         "bathrooms": _safe_float(item.get("baths")),
@@ -199,28 +553,28 @@ def _normalize_zillow(item: dict, neighborhood: str) -> Optional[dict]:
         "in_unit_laundry": False, "dishwasher": False,
         "parking": False, "storage": False, "gym": False,
         "description": item.get("statusText", ""),
-        "available_date": None,
-        "neighborhood": neighborhood,
+        "available_date": None, "neighborhood": neighborhood,
         "scraped_at": datetime.utcnow().isoformat(),
     }
 
 
+# ── Redfin ────────────────────────────────────────────────────────────────────
+
 def fetch_redfin() -> list[dict]:
     results = []
     try:
-        headers = {**SESSION.headers, "Referer": "https://www.redfin.com/", "Accept": "*/*"}
+        headers = {**HEADERS_JSON, "Referer": "https://www.redfin.com/"}
         params = {
-            "al": 1, "isRentals": "true", "min_beds": 2, "max_price": 8000,
-            "region_id": 20274, "region_type": 6, "sf": "1,2,3,5,6,7",
-            "start": 0, "count": 100, "v": 8,
+            "al": 1, "isRentals": "true", "min_beds": MIN_BEDS,
+            "max_price": MAX_PRICE, "region_id": 20274, "region_type": 6,
+            "sf": "1,2,3,5,6,7", "start": 0, "count": 100, "v": 8,
         }
         resp = SESSION.get("https://www.redfin.com/stingray/api/gis", params=params, headers=headers, timeout=20)
         if resp.ok:
             text = resp.text
             if text.startswith("{}&&"):
                 text = text[4:]
-            data = json.loads(text)
-            for item in data.get("payload", {}).get("homes", []):
+            for item in json.loads(text).get("payload", {}).get("homes", []):
                 n = _normalize_redfin(item)
                 if n:
                     results.append(n)
@@ -233,52 +587,188 @@ def _normalize_redfin(item: dict) -> Optional[dict]:
     price = _safe_int(item.get("priceInfo", {}).get("amount"))
     if not price:
         return None
-    addr_info = item.get("addressInfo", {})
-    address = f"{addr_info.get('street', '')} {addr_info.get('city', '')}".strip()
+    addr = item.get("addressInfo", {})
     return {
         "source": "redfin",
         "primary_url": f"https://www.redfin.com{item.get('url', '')}",
-        "address": address,
-        "unit": addr_info.get("unitNumber", ""),
-        "price": price,
+        "address": f"{addr.get('street', '')} {addr.get('city', '')}".strip(),
+        "unit": addr.get("unitNumber", ""), "price": price,
         "bedrooms": _safe_int(item.get("beds")),
         "bathrooms": _safe_float(item.get("baths")),
         "sqft": _safe_int(item.get("sqft")),
         "floor": None,
         "in_unit_laundry": False, "dishwasher": False,
         "parking": False, "storage": False, "gym": False,
-        "description": "",
-        "available_date": None,
+        "description": "", "available_date": None,
         "neighborhood": "brooklyn",
         "scraped_at": datetime.utcnow().isoformat(),
     }
 
 
+# ── Generic extraction helpers ────────────────────────────────────────────────
+
 def _extract_jsonld_listings(html: str, source: str, neighborhood: str) -> list[dict]:
+    """Extract listings from JSON-LD structured data blocks."""
     results = []
     for m in re.findall(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', html, re.DOTALL):
         try:
             data = json.loads(m)
             items = data if isinstance(data, list) else [data]
             for item in items:
-                price = _parse_price(str(item.get("price", "") or item.get("priceRange", "")))
+                if item.get("@type") not in ("Apartment", "ApartmentComplex", "Residence", "Product", "RealEstateListing"):
+                    continue
+                price = _parse_price(str(item.get("price") or item.get("priceRange") or ""))
                 address = item.get("address", {})
                 addr_str = address.get("streetAddress", "") if isinstance(address, dict) else str(address)
-                if price and addr_str:
-                    results.append({
-                        "source": source, "primary_url": item.get("url", ""),
-                        "address": addr_str, "unit": "", "price": price,
-                        "bedrooms": None, "bathrooms": None, "sqft": None, "floor": None,
-                        "in_unit_laundry": False, "dishwasher": False,
-                        "parking": False, "storage": False, "gym": False,
-                        "description": item.get("description", "")[:1000],
-                        "available_date": None, "neighborhood": neighborhood,
-                        "scraped_at": datetime.utcnow().isoformat(),
-                    })
+                if not price or not addr_str:
+                    continue
+                results.append({
+                    "source": source, "primary_url": item.get("url", ""),
+                    "address": addr_str, "unit": "", "price": price,
+                    "bedrooms": _safe_int(item.get("numberOfRooms")),
+                    "bathrooms": None, "sqft": None, "floor": None,
+                    "in_unit_laundry": False, "dishwasher": False,
+                    "parking": False, "storage": False, "gym": False,
+                    "description": (item.get("description") or "")[:1000],
+                    "available_date": None, "neighborhood": neighborhood,
+                    "scraped_at": datetime.utcnow().isoformat(),
+                })
         except Exception:
             continue
     return results
 
+
+def _extract_next_data(html: str, source: str, neighborhood: str) -> list[dict]:
+    """Extract listings from Next.js __NEXT_DATA__ JSON blob."""
+    results = []
+    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.DOTALL)
+    if not m:
+        return results
+    try:
+        data = json.loads(m.group(1))
+        # Walk common paths where listings appear
+        candidates = []
+        props = data.get("props", {}).get("pageProps", {})
+        for key in ("listings", "searchResults", "results", "properties", "rentals"):
+            val = props.get(key)
+            if isinstance(val, list):
+                candidates.extend(val)
+            elif isinstance(val, dict):
+                for subkey in ("listings", "results", "items"):
+                    if isinstance(val.get(subkey), list):
+                        candidates.extend(val[subkey])
+
+        for item in candidates:
+            price = _safe_int(item.get("price") or item.get("rent") or item.get("listPrice"))
+            address = (
+                item.get("address") or item.get("streetAddress") or
+                item.get("building_address") or
+                (item.get("location") or {}).get("address") or ""
+            )
+            if not price or not address:
+                continue
+            amenities = [str(a).lower() for a in (item.get("amenities") or [])]
+            url = item.get("url") or item.get("listingUrl") or item.get("detailUrl") or ""
+            results.append({
+                "source": source, "primary_url": url,
+                "address": str(address), "unit": str(item.get("unit") or ""),
+                "price": price,
+                "bedrooms": _safe_int(item.get("bedrooms") or item.get("beds")),
+                "bathrooms": _safe_float(item.get("bathrooms") or item.get("baths")),
+                "sqft": _safe_int(item.get("sqft") or item.get("squareFeet") or item.get("square_footage")),
+                "floor": _safe_int(item.get("floor")),
+                "in_unit_laundry": _has(amenities, ["washer", "laundry"]),
+                "dishwasher":       _has(amenities, ["dishwasher"]),
+                "parking":          _has(amenities, ["parking", "garage"]),
+                "storage":          _has(amenities, ["storage"]),
+                "gym":              _has(amenities, ["gym", "fitness"]),
+                "description": (item.get("description") or "")[:2000],
+                "available_date": item.get("availableDate") or item.get("available_at"),
+                "neighborhood": neighborhood,
+                "scraped_at": datetime.utcnow().isoformat(),
+            })
+    except Exception as e:
+        log.debug(f"    __NEXT_DATA__ parse failed for {source}/{neighborhood}: {e}")
+    return results
+
+
+def _extract_embedded_json(html: str, source: str, neighborhood: str) -> list[dict]:
+    """
+    Find JSON arrays embedded in <script> tags (common on property sites).
+    Looks for patterns like: window.__data = [...] or var listings = [...]
+    """
+    results = []
+    patterns = [
+        r'window\.__(?:data|listings|state|props)\s*=\s*(\{.*?\});',
+        r'var\s+(?:listings|properties|rentals|units)\s*=\s*(\[.*?\]);',
+        r'"listings"\s*:\s*(\[.*?\])',
+        r'"units"\s*:\s*(\[.*?\])',
+        r'"availableUnits"\s*:\s*(\[.*?\])',
+        r'"floorPlans"\s*:\s*(\[.*?\])',
+    ]
+    for pattern in patterns:
+        for m in re.finditer(pattern, html, re.DOTALL):
+            try:
+                data = json.loads(m.group(1))
+                items = data if isinstance(data, list) else data.get("listings") or data.get("units") or []
+                for item in items:
+                    price = _safe_int(item.get("price") or item.get("rent") or item.get("monthlyRent"))
+                    address = item.get("address") or item.get("streetAddress") or ""
+                    if not price:
+                        continue
+                    results.append({
+                        "source": source, "primary_url": item.get("url", ""),
+                        "address": str(address), "unit": str(item.get("unit") or item.get("unitNumber") or ""),
+                        "price": price,
+                        "bedrooms": _safe_int(item.get("bedrooms") or item.get("beds")),
+                        "bathrooms": _safe_float(item.get("bathrooms") or item.get("baths")),
+                        "sqft": _safe_int(item.get("sqft") or item.get("squareFeet")),
+                        "floor": _safe_int(item.get("floor")),
+                        "in_unit_laundry": False, "dishwasher": False,
+                        "parking": False, "storage": False, "gym": False,
+                        "description": (item.get("description") or "")[:1000],
+                        "available_date": item.get("availableDate"),
+                        "neighborhood": neighborhood,
+                        "scraped_at": datetime.utcnow().isoformat(),
+                    })
+            except Exception:
+                continue
+    return results
+
+
+def _extract_text_listings(html: str, source: str, neighborhood: str) -> list[dict]:
+    """
+    Last-resort: scan raw HTML text for price + address patterns.
+    Catches building sites that don't use structured data.
+    """
+    results = []
+    # Find price mentions
+    price_blocks = re.finditer(r'\$\s*([\d,]+)\s*/\s*(?:mo|month)', html, re.IGNORECASE)
+    for pm in price_blocks:
+        price = _safe_int(pm.group(1).replace(",", ""))
+        if not price or price > MAX_PRICE or price < 500:
+            continue
+        # Look for bed/bath near the price mention
+        context = html[max(0, pm.start()-300):pm.end()+300]
+        beds = _safe_int((re.search(r'(\d+)\s*(?:bed|bd|BR)', context, re.IGNORECASE) or type('', (), {'group': lambda *a: None})()).group(1))
+        baths = _safe_float((re.search(r'([\d.]+)\s*(?:bath|ba)', context, re.IGNORECASE) or type('', (), {'group': lambda *a: None})()).group(1))
+        sqft = _safe_int((re.search(r'([\d,]+)\s*(?:sq\.?\s*ft|sqft)', context, re.IGNORECASE) or type('', (), {'group': lambda *a: None})()).group(1))
+        if price and (beds is None or beds >= MIN_BEDS):
+            results.append({
+                "source": source, "primary_url": "",
+                "address": "", "unit": "", "price": price,
+                "bedrooms": beds, "bathrooms": baths, "sqft": sqft,
+                "floor": None,
+                "in_unit_laundry": False, "dishwasher": False,
+                "parking": False, "storage": False, "gym": False,
+                "description": re.sub(r'<[^>]+>', ' ', context)[:500],
+                "available_date": None, "neighborhood": neighborhood,
+                "scraped_at": datetime.utcnow().isoformat(),
+            })
+    return results
+
+
+# ── Shared utilities ──────────────────────────────────────────────────────────
 
 def _parse_price(s: str) -> Optional[int]:
     if not s:
@@ -300,6 +790,9 @@ def _safe_float(val) -> Optional[float]:
         return float(str(val).replace(",", ""))
     except Exception:
         return None
+
+def _has(amenities: list, keywords: list) -> bool:
+    return any(kw in a for a in amenities for kw in keywords)
 
 def _delay(lo: float, hi: float):
     time.sleep(random.uniform(lo, hi))
