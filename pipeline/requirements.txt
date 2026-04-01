@@ -1,0 +1,7 @@
+playwright>=1.43.0
+playwright-stealth>=1.0.6
+supabase>=2.4.0
+rapidfuzz>=3.6.1
+scikit-learn>=1.4.2
+numpy>=1.26.4
+python-dotenv>=1.0.1
