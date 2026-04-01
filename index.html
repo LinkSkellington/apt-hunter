@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Apt Hunter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:opsz,wght@6..36,400;6..36,500&family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+<style>
+/* ── Design system ─────────────────────────────────────────────────────── */
+:root {
+  --bg:      #0c0b09;
+  --bg2:     #141310;
+  --bg3:     #1e1c18;
+  --bg4:     #262420;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text:    #e6e0d4;
+  --muted:   #6e6a62;
+  --muted2:  #4a4742;
+  --fire:    #f0622e;
+  --gold:    #c9953a;
+  --blue:    #4f8fd4;
+  --ice:     #5fa8be;
+  --green:   #4fa876;
+  --red:     #c05050;
+  --amber:   #c08a30;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100}
+.logo{font-family:'Instrument Serif',serif;font-size:19px;letter-spacing:-0.01em;display:flex;align-items:baseline;gap:8px}
+.logo-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.04em}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.ts{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+.btn{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);padding:5px 13px;border-radius:5px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s}
+.btn:hover{border-color:var(--fire);color:var(--fire)}
+.btn.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Nav tabs ──────────────────────────────────────────────────────────── */
+.nav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 20px;overflow-x:auto;gap:2px}
+.tab{padding:9px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;user-select:none}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);border-bottom-color:var(--fire)}
+.cnt{font-family:'DM Mono',monospace;font-size:9px;background:var(--bg3);padding:1px 5px;border-radius:3px;margin-left:4px;color:var(--muted2)}
+.tab.on .cnt{background:rgba(240,98,46,.15);color:var(--fire)}
+
+/* ── Page wrapper ──────────────────────────────────────────────────────── */
+.page{padding:18px 20px;max-width:1200px}
+
+/* ── Stat bar ──────────────────────────────────────────────────────────── */
+.stats{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:13px 16px;flex:1;min-width:110px}
+.stat-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:3px}
+.stat-val{font-family:'Instrument Serif',serif;font-size:26px;line-height:1;letter-spacing:-0.01em}
+.stat-val.fire{color:var(--fire)}
+.stat-val.gold{color:var(--gold)}
+.stat-val.blue{color:var(--blue)}
+.stat-val.ice{color:var(--ice)}
+.stat-hint{font-size:10px;color:var(--muted2);margin-top:2px}
+
+/* ── Filter bar ────────────────────────────────────────────────────────── */
+.filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.search{background:var(--bg2);border:1px solid var(--border);padding:6px 11px;border-radius:6px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;width:210px}
+.search::placeholder{color:var(--muted2)}
+.search:focus{border-color:var(--border2)}
+.chip{background:var(--bg2);border:1px solid var(--border);padding:4px 11px;border-radius:20px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .12s;user-select:none}
+.chip:hover{border-color:var(--border2);color:var(--text)}
+.chip.on{border-color:var(--fire);color:var(--fire);background:rgba(240,98,46,.08)}
+
+/* ── Section ───────────────────────────────────────────────────────────── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-family:'Instrument Serif',serif;font-size:15px;letter-spacing:-0.01em}
+.sec-count{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)}
+.divider{border:none;border-top:1px solid var(--border);margin:18px 0}
+.stack{display:flex;flex-direction:column;gap:9px}
+
+/* ── Listing card ──────────────────────────────────────────────────────── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:16px 18px;cursor:pointer;transition:all .14s;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+.card:hover{border-color:var(--border2);background:var(--bg3)}
+.card.must {border-left:3px solid var(--fire)}
+.card.strong{border-left:3px solid var(--gold)}
+.card.backup{border-left:3px solid var(--blue)}
+.card.skip  {border-left:3px solid var(--muted2);opacity:.55}
+
+.card-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:7px}
+.addr{font-size:14px;font-weight:500;letter-spacing:-0.01em}
+.unit{color:var(--muted);font-size:12px}
+
+/* badges */
+.badge{font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:3px;font-weight:500;white-space:nowrap}
+.b-fire  {background:rgba(240,98,46,.12);color:var(--fire);border:1px solid rgba(240,98,46,.2)}
+.b-gold  {background:rgba(201,149,58,.1);color:var(--gold);border:1px solid rgba(201,149,58,.2)}
+.b-blue  {background:rgba(79,143,212,.1);color:var(--blue);border:1px solid rgba(79,143,212,.2)}
+.b-muted {background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+.b-hot   {background:rgba(240,98,46,.12);color:var(--fire);border:1px solid rgba(240,98,46,.2)}
+.b-ice   {background:rgba(95,168,190,.08);color:var(--ice);border:1px solid rgba(95,168,190,.2)}
+.b-green {background:rgba(79,168,118,.1);color:var(--green);border:1px solid rgba(79,168,118,.2)}
+.b-red   {background:rgba(192,80,80,.1);color:var(--red);border:1px solid rgba(192,80,80,.2)}
+.b-amber {background:rgba(192,138,48,.1);color:var(--amber);border:1px solid rgba(192,138,48,.2)}
+
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:9px}
+.meta .v{color:var(--text);font-weight:500}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+
+.card-r{display:flex;flex-direction:column;align-items:flex-end;gap:7px;min-width:110px}
+.price{font-family:'Instrument Serif',serif;font-size:20px;letter-spacing:-0.01em;line-height:1}
+.score-wrap{text-align:center}
+.score-num{font-family:'Instrument Serif',serif;font-size:21px;line-height:1}
+.score-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2)}
+.bar-wrap{width:52px;height:3px;background:var(--bg4);border-radius:2px;margin-top:3px}
+.bar{height:3px;border-radius:2px}
+.day-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2)}
+
+/* status selector */
+.sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:10px;font-family:'DM Mono',monospace;padding:3px 5px;border-radius:4px;cursor:pointer;outline:none}
+.sel:focus{border-color:var(--border2)}
+
+/* ── Empty state ───────────────────────────────────────────────────────── */
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-i{font-size:28px;margin-bottom:10px;opacity:.4}
+
+/* ── Detail panel ──────────────────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:none}
+.overlay.open{display:block}
+.panel{position:fixed;right:0;top:0;bottom:0;width:460px;background:var(--bg2);border-left:1px solid var(--border);z-index:201;overflow-y:auto;padding:22px;display:none}
+.panel.open{display:block}
+.panel-close{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 11px;border-radius:5px;cursor:pointer;font-size:11px;font-family:'DM Mono',monospace;margin-bottom:18px}
+.panel-close:hover{color:var(--text);border-color:var(--border2)}
+.panel-addr{font-family:'Instrument Serif',serif;font-size:21px;letter-spacing:-0.02em;margin-bottom:3px}
+.panel-neigh{font-size:11px;color:var(--muted);margin-bottom:8px}
+.panel-price{font-family:'Instrument Serif',serif;font-size:28px;color:var(--fire);margin-bottom:16px;line-height:1}
+.psec{margin-bottom:16px}
+.psec-title{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.pfield{background:var(--bg3);border-radius:7px;padding:9px 11px}
+.pfl{font-size:9px;color:var(--muted2);font-family:'DM Mono',monospace;margin-bottom:2px}
+.pfv{font-size:13px;font-weight:500}
+.notes{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:9px 11px;border-radius:7px;resize:vertical;min-height:72px;outline:none}
+.notes:focus{border-color:var(--border2)}
+.src-link{color:var(--blue);font-size:11px;font-family:'DM Mono',monospace;text-decoration:none;display:block;margin-bottom:4px}
+.src-link:hover{text-decoration:underline}
+
+/* ── Dupes view ────────────────────────────────────────────────────────── */
+.dupe-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:8px}
+.dupe-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;font-weight:500}
+.dupe-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ── CONFIG — set these two values ───────────────────────────────────── -->
+<script>
+const SUPABASE_URL = 'https:/lexlvpwtffkarcahszrk';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';  // read-only, safe in frontend
+</script>
+<!-- ──────────────────────────────────────────────────────────────────────── -->
+
+<div class="header">
+  <div class="logo">Apt Hunter <span class="logo-sub">BK + HOB · JUN 1 · 2BD+</span></div>
+  <div class="hdr-right">
+    <span class="ts" id="ts">—</span>
+    <button class="btn" id="refresh-btn" onclick="load()">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="tab on" id="t-top"  onclick="sw('top')">Top picks <span class="cnt" id="c-top">0</span></div>
+  <div class="tab"    id="t-new"  onclick="sw('new')">New today <span class="cnt" id="c-new">0</span></div>
+  <div class="tab"    id="t-hot"  onclick="sw('hot')">🔥 Hot <span class="cnt" id="c-hot">0</span></div>
+  <div class="tab"    id="t-all"  onclick="sw('all')">All active <span class="cnt" id="c-all">0</span></div>
+  <div class="tab"    id="t-dup"  onclick="sw('dup')">Discrepancies <span class="cnt" id="c-dup">0</span></div>
+</div>
+
+<div class="page">
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Must Tour</div><div class="stat-val fire" id="s-must">—</div><div class="stat-hint">act fast</div></div>
+    <div class="stat"><div class="stat-label">Strong</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">worth a look</div></div>
+    <div class="stat"><div class="stat-label">New (24 h)</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">fresh today</div></div>
+    <div class="stat"><div class="stat-label">🔥 Hot</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤ 7 days</div></div>
+    <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">pass filter</div></div>
+    <div class="stat"><div class="stat-label">Avg rent</div><div class="stat-val ice" id="s-avg">—</div><div class="stat-hint">all active</div></div>
+  </div>
+
+  <div class="filters">
+    <input class="search" type="text" placeholder="Address or neighborhood…" id="q" oninput="render()"/>
+    <div class="chip on"  id="fn-all" onclick="setNeigh('all')">All areas</div>
+    <div class="chip"     id="fn-bh"  onclick="setNeigh('brooklyn heights')">Brooklyn Hts</div>
+    <div class="chip"     id="fn-wb"  onclick="setNeigh('williamsburg')">Williamsburg</div>
+    <div class="chip"     id="fn-ch"  onclick="setNeigh('cobble hill')">Cobble Hill</div>
+    <div class="chip"     id="fn-ps"  onclick="setNeigh('park slope')">Park Slope</div>
+    <div class="chip"     id="fn-hob" onclick="setNeigh('hoboken')">Hoboken</div>
+    <div class="chip"     id="fc"     onclick="toggleCommute()">≤ 45 min</div>
+  </div>
+
+  <div id="main"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <button class="panel-close" onclick="closePanel()">← Back</button>
+  <div id="panel-body"></div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────
+let all = [], dupes = [], tab = 'top', neigh = 'all', commuteFilter = false;
+const today = new Date(); today.setHours(0,0,0,0);
+
+// ── Supabase REST helper ─────────────────────────────────────────────────
+async function sbGet(table, select = '*', filter = '') {
+  const url = `${SUPABASE_URL}/rest/v1/${table}?select=${encodeURIComponent(select)}${filter ? '&' + filter : ''}`;
+  const r = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!r.ok) throw new Error(`Supabase ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function sbPatch(table, id, fields) {
+  const url = `${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`;
+  await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify(fields),
+  });
+}
+
+// ── Load data ────────────────────────────────────────────────────────────
+async function load() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spin');
+  document.getElementById('ts').textContent = 'Loading…';
+  try {
+    const [rows, drows] = await Promise.all([
+      sbGet(
+        'listings',
+        'id,address_normalized,unit,neighborhood,price,price_min_seen,price_max_seen,' +
+        'bedrooms,bathrooms,sqft,floor,is_ground_floor,in_unit_laundry,dishwasher,' +
+        'parking,storage,gym,natural_light_confidence,commute_minutes,commute_ok,' +
+        'primary_url,source_urls,sources,building_reviews,broker_fee,' +
+        'score_raw,score_tier,heat,status,notes,first_seen,last_seen',
+        "status=neq.rejected&order=score_raw.desc"
+      ),
+      sbGet('price_discrepancies').catch(() => []),
+    ]);
+    all = rows;
+    dupes = drows;
+  } catch (e) {
+    console.error(e);
+    // Fall through — keep existing data or show demo
+    if (!all.length) all = DEMO;
+    document.getElementById('ts').textContent = 'Error — demo mode';
+    btn.classList.remove('spin');
+    updateStats(); render();
+    return;
+  }
+  updateStats();
+  render();
+  document.getElementById('ts').textContent = new Date().toLocaleTimeString();
+  btn.classList.remove('spin');
+}
+
+// ── Stats ────────────────────────────────────────────────────────────────
+function updateStats() {
+  const active = all.filter(l => l.status !== 'rejected' && l.score_tier !== '❌ Skip');
+  const must   = active.filter(l => l.score_tier === '🔥 Must Tour');
+  const strong = active.filter(l => l.score_tier === '👍 Strong');
+  const hot    = active.filter(l => l.heat === '🔥 Hot');
+  const newT   = active.filter(l => daysAgo(l.first_seen) === 0);
+  const prices = active.map(l => l.price).filter(Boolean);
+  const avg    = prices.length ? Math.round(prices.reduce((a,b)=>a+b,0)/prices.length) : 0;
+
+  set('s-must',  must.length);
+  set('s-strong',strong.length);
+  set('s-new',   newT.length);
+  set('s-hot',   hot.length);
+  set('s-total', active.length);
+  set('s-avg',   avg ? '$'+avg.toLocaleString() : '—');
+
+  set('c-top',  must.length + strong.length);
+  set('c-new',  newT.length);
+  set('c-hot',  hot.length);
+  set('c-all',  active.length);
+  set('c-dup',  dupes.length);
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+function sw(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('on'));
+  document.getElementById('t-'+t).classList.add('on');
+  render();
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────
+function setNeigh(n) {
+  neigh = n;
+  document.querySelectorAll('[id^="fn-"]').forEach(el => el.classList.remove('on'));
+  const map = {'all':'fn-all','brooklyn heights':'fn-bh','williamsburg':'fn-wb','cobble hill':'fn-ch','park slope':'fn-ps','hoboken':'fn-hob'};
+  if (map[n]) document.getElementById(map[n]).classList.add('on');
+  render();
+}
+function toggleCommute() {
+  commuteFilter = !commuteFilter;
+  document.getElementById('fc').classList.toggle('on', commuteFilter);
+  render();
+}
+
+function filtered() {
+  const q = document.getElementById('q').value.toLowerCase();
+  let list = all.filter(l => l.status !== 'rejected' && l.score_tier !== '❌ Skip');
+  if (q) list = list.filter(l =>
+    (l.address_normalized||'').toLowerCase().includes(q) ||
+    (l.neighborhood||'').toLowerCase().includes(q)
+  );
+  if (neigh !== 'all') list = list.filter(l => (l.neighborhood||'').toLowerCase() === neigh);
+  if (commuteFilter) list = list.filter(l => (l.commute_minutes||99) <= 45);
+  return list.sort((a,b) => (b.score_raw||0) - (a.score_raw||0));
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function render() {
+  const main = document.getElementById('main');
+  if (tab === 'dup') { main.innerHTML = renderDupes(); return; }
+
+  const rows = filtered();
+  let html = '';
+
+  if (tab === 'top') {
+    html += section('🔥 Must Tour', rows.filter(l => l.score_tier === '🔥 Must Tour'));
+    html += '<hr class="divider"/>';
+    html += section('👍 Strong', rows.filter(l => l.score_tier === '👍 Strong'));
+
+  } else if (tab === 'new') {
+    html += section('New in last 24 hours', rows.filter(l => daysAgo(l.first_seen) <= 0));
+
+  } else if (tab === 'hot') {
+    html += section('🔥 Hot — move fast', rows.filter(l => l.heat === '🔥 Hot'));
+    html += '<hr class="divider"/>';
+    html += section('⏳ Normal', rows.filter(l => l.heat === '⏳ Normal').slice(0, 10));
+
+  } else {
+    html += section('All active listings', rows);
+  }
+
+  main.innerHTML = html;
+}
+
+function section(title, rows) {
+  return `
+    <div class="sec-hdr">
+      <span class="sec-title">${title}</span>
+      <span class="sec-count">${rows.length} listing${rows.length!==1?'s':''}</span>
+    </div>
+    <div class="stack">
+      ${rows.length ? rows.map(card).join('') : '<div class="empty"><div class="empty-i">○</div>Nothing here yet</div>'}
+    </div>`;
+}
+
+function card(l) {
+  const tierCls = {
+    '🔥 Must Tour':'must','👍 Strong':'strong','🤔 Backup':'backup','❌ Skip':'skip'
+  }[l.score_tier] || 'backup';
+
+  const tierBadge = {
+    '🔥 Must Tour': `<span class="badge b-fire">Must Tour</span>`,
+    '👍 Strong':    `<span class="badge b-gold">Strong</span>`,
+    '🤔 Backup':    `<span class="badge b-blue">Backup</span>`,
+  }[l.score_tier] || '';
+
+  const heatBadge = l.heat === '🔥 Hot'
+    ? `<span class="badge b-hot">Hot</span>`
+    : l.heat === '🧊 Stale'
+    ? `<span class="badge b-ice">Stale</span>`
+    : '';
+
+  const multiSrc = (l.sources||[]).length > 1
+    ? `<span class="badge b-amber">${l.sources.length} sources</span>` : '';
+
+  const cm = l.commute_minutes;
+  const cmColor = !cm ? '--muted' : cm<=35?'--green':cm<=45?'--gold':'--amber';
+
+  const ams = [
+    l.in_unit_laundry && 'Laundry',
+    l.dishwasher      && 'DW',
+    l.parking         && 'Parking',
+    l.storage         && 'Storage',
+    l.gym             && 'Gym',
+  ].filter(Boolean);
+
+  const lightBadge =
+    l.natural_light_confidence === 'High' ? `<span class="badge b-green">Good light</span>` :
+    l.natural_light_confidence === 'Low'  ? `<span class="badge b-red">Low light</span>` : '';
+
+  const sc = l.score_raw || 0;
+  const scColor = sc>=75?'var(--fire)':sc>=55?'var(--gold)':sc>=35?'var(--blue)':'var(--muted)';
+  const srcName = (l.sources||['?'])[0] || '?';
+
+  return `
+  <div class="card ${tierCls}" onclick="openPanel('${l.id}')">
+    <div>
+      <div class="card-top">
+        <span class="addr">${l.address_normalized||'—'}</span>
+        <span class="unit">${l.unit?'#'+l.unit:''}</span>
+        ${tierBadge}${heatBadge}${multiSrc}
+      </div>
+      <div class="meta">
+        <span><span class="v">${l.bedrooms||'?'}bd</span> / <span class="v">${l.bathrooms||'?'}ba</span></span>
+        <span><span class="v">${l.sqft?l.sqft.toLocaleString():'?'}</span> sqft</span>
+        <span><span class="v" style="color:var(${cmColor})">${cm||'?'} min</span> Midtown</span>
+        <span>Fl <span class="v">${l.floor||'?'}</span></span>
+        <span style="color:var(--muted2)">${l.neighborhood||''}</span>
+      </div>
+      <div class="tags">
+        ${ams.map(a=>`<span class="badge b-muted">${a}</span>`).join('')}
+        ${lightBadge}
+        <span class="badge b-muted">${srcName}</span>
+      </div>
+    </div>
+    <div class="card-r">
+      <div class="price">$${(l.price||0).toLocaleString()}</div>
+      <div class="score-wrap">
+        <div class="score-num" style="color:${scColor}">${sc}</div>
+        <div class="score-lbl">score</div>
+        <div class="bar-wrap"><div class="bar" style="width:${sc}%;background:${scColor}"></div></div>
+      </div>
+      <div class="day-lbl">${fmtDays(l.first_seen)}</div>
+      <select class="sel" onclick="event.stopPropagation()" onchange="setStatus('${l.id}',this.value)">
+        ${['new','reviewing','saved','touring','contacted','rejected'].map(s=>`<option${l.status===s?' selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
+}
+
+// ── Detail panel ──────────────────────────────────────────────────────────
+function openPanel(id) {
+  const l = all.find(x => x.id === id);
+  if (!l) return;
+
+  const ams = [
+    ['In-unit laundry', l.in_unit_laundry],
+    ['Dishwasher',      l.dishwasher],
+    ['Parking',         l.parking],
+    ['Storage',         l.storage],
+    ['Gym',             l.gym],
+  ];
+  const srcs = Array.isArray(l.source_urls) ? l.source_urls : [];
+  const sc = l.score_raw || 0;
+  const scColor = sc>=75?'var(--fire)':sc>=55?'var(--gold)':sc>=35?'var(--blue)':'var(--muted)';
+
+  document.getElementById('panel-body').innerHTML = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      ${{
+        '🔥 Must Tour':`<span class="badge b-fire">Must Tour</span>`,
+        '👍 Strong':   `<span class="badge b-gold">Strong</span>`,
+        '🤔 Backup':   `<span class="badge b-blue">Backup</span>`,
+      }[l.score_tier]||''}
+      ${l.heat==='🔥 Hot'?`<span class="badge b-hot">Hot</span>`:''}
+    </div>
+    <div class="panel-addr">${l.address_normalized||'—'}${l.unit?' #'+l.unit:''}</div>
+    <div class="panel-neigh">${l.neighborhood||''}</div>
+    <div class="panel-price">$${(l.price||0).toLocaleString()}<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+
+    <div class="psec">
+      <div class="psec-title">Details</div>
+      <div class="pgrid">
+        <div class="pfield"><div class="pfl">Bedrooms</div><div class="pfv">${l.bedrooms||'?'}</div></div>
+        <div class="pfield"><div class="pfl">Bathrooms</div><div class="pfv">${l.bathrooms||'?'}</div></div>
+        <div class="pfield"><div class="pfl">Sq ft</div><div class="pfv">${l.sqft?l.sqft.toLocaleString():'?'}</div></div>
+        <div class="pfield"><div class="pfl">Floor</div><div class="pfv">${l.floor||'?'}</div></div>
+        <div class="pfield"><div class="pfl">Commute</div><div class="pfv" style="color:var(--${!l.commute_minutes?'muted':l.commute_minutes<=45?'green':'amber'})">${l.commute_minutes||'?'} min</div></div>
+        <div class="pfield"><div class="pfl">Natural light</div><div class="pfv">${l.natural_light_confidence||'?'}</div></div>
+        <div class="pfield"><div class="pfl">Score</div><div class="pfv" style="color:${scColor}">${sc}/100</div></div>
+        <div class="pfield"><div class="pfl">Days listed</div><div class="pfv">${Math.max(0,Math.floor((Date.now()-new Date(l.first_seen))/86400000))}</div></div>
+      </div>
+    </div>
+
+    <div class="psec">
+      <div class="psec-title">Amenities</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${ams.map(([n,v])=>`<span class="badge ${v?'b-green':'b-red'}">${v?'✓':'✗'} ${n}</span>`).join('')}
+      </div>
+    </div>
+
+    <div class="psec">
+      <div class="psec-title">Sources</div>
+      ${srcs.length ? srcs.map(u=>`<a class="src-link" href="${u}" target="_blank">↗ ${new URL(u).hostname}</a>`).join('') : `<a class="src-link" href="${l.primary_url||'#'}" target="_blank">↗ View listing</a>`}
+      ${(l.price_max_seen-l.price_min_seen)>100?`<span class="badge b-amber" style="margin-top:6px;display:inline-block">Price discrepancy: $${l.price_min_seen?.toLocaleString()}–$${l.price_max_seen?.toLocaleString()}</span>`:''}
+    </div>
+
+    <div class="psec">
+      <div class="psec-title">Status</div>
+      <select class="sel" style="width:100%;font-size:12px;padding:7px" onchange="setStatus('${l.id}',this.value)">
+        ${['new','reviewing','saved','touring','contacted','rejected'].map(s=>`<option${l.status===s?' selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="psec">
+      <div class="psec-title">Notes</div>
+      <textarea class="notes" placeholder="Your notes…" onchange="setNotes('${l.id}',this.value)">${l.notes||''}</textarea>
+    </div>`;
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+
+// ── Dupes view ────────────────────────────────────────────────────────────
+function renderDupes() {
+  if (!dupes.length) return `<div class="empty"><div class="empty-i">○</div>No price discrepancies found</div>`;
+  let html = `<div class="sec-hdr"><span class="sec-title">Price discrepancies</span><span class="sec-count">${dupes.length} found</span></div>`;
+  dupes.forEach(d => {
+    const srcs = Array.isArray(d.source_urls) ? d.source_urls : [];
+    html += `<div class="dupe-card">
+      <div class="dupe-hdr">
+        <span>${d.address_normalized||'—'}${d.unit?' #'+d.unit:''}</span>
+        <span class="badge b-amber">$${(d.price_max_seen-d.price_min_seen).toLocaleString()} diff</span>
+      </div>
+      ${(d.sources||[]).map((s,i)=>`<div class="dupe-row"><span>${s}</span><a href="${srcs[i]||'#'}" target="_blank" style="color:var(--blue);font-size:10px">$${(d.price_min_seen||0).toLocaleString()} – $${(d.price_max_seen||0).toLocaleString()} ↗</a></div>`).join('')}
+    </div>`;
+  });
+  return html;
+}
+
+// ── Write-back helpers ────────────────────────────────────────────────────
+async function setStatus(id, status) {
+  const l = all.find(x => x.id === id);
+  if (l) l.status = status;
+  updateStats(); render();
+  if (SUPABASE_URL.includes('YOUR')) return;
+  await sbPatch('listings', id, { status }).catch(e => console.warn('patch failed', e));
+}
+async function setNotes(id, notes) {
+  const l = all.find(x => x.id === id);
+  if (l) l.notes = notes;
+  if (SUPABASE_URL.includes('YOUR')) return;
+  await sbPatch('listings', id, { notes }).catch(e => console.warn('patch failed', e));
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────
+function daysAgo(d) {
+  if (!d) return 999;
+  const dt = new Date(d); dt.setHours(0,0,0,0);
+  return Math.floor((today-dt)/86400000);
+}
+function fmtDays(d) {
+  const n = daysAgo(d);
+  if (n === 0) return 'Today';
+  if (n === 1) return '1 day ago';
+  return `${n} days ago`;
+}
+function set(id, v) { document.getElementById(id).textContent = v; }
+
+// ── Demo data (shown when Supabase not configured) ─────────────────────────
+const DEMO = [
+  {id:'d1',address_normalized:'45 Pineapple St',unit:'4A',neighborhood:'brooklyn heights',price:6800,bedrooms:2,bathrooms:2,sqft:1350,score_tier:'🔥 Must Tour',score_raw:87,heat:'🔥 Hot',status:'new',commute_minutes:30,in_unit_laundry:true,dishwasher:true,parking:false,storage:true,gym:true,natural_light_confidence:'High',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'#',sources:['StreetEasy'],source_urls:['#'],floor:4,price_min_seen:6800,price_max_seen:6800,notes:''},
+  {id:'d2',address_normalized:'220 N 10th St',unit:'3B',neighborhood:'williamsburg',price:7100,bedrooms:2,bathrooms:2,sqft:1420,score_tier:'🔥 Must Tour',score_raw:81,heat:'🔥 Hot',status:'reviewing',commute_minutes:28,in_unit_laundry:true,dishwasher:true,parking:true,storage:false,gym:true,natural_light_confidence:'High',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'#',sources:['Zillow','StreetEasy'],source_urls:['#','#'],floor:3,price_min_seen:7100,price_max_seen:7400,notes:'Corner unit, great reviews'},
+  {id:'d3',address_normalized:'150 Joralemon St',unit:'7C',neighborhood:'brooklyn heights',price:7900,bedrooms:3,bathrooms:2,sqft:1650,score_tier:'👍 Strong',score_raw:72,heat:'⏳ Normal',status:'saved',commute_minutes:32,in_unit_laundry:true,dishwasher:true,parking:false,storage:true,gym:false,natural_light_confidence:'High',first_seen:'2025-04-05',last_seen:new Date().toISOString().slice(0,10),primary_url:'#',sources:['Corcoran'],source_urls:['#'],floor:7,price_min_seen:7900,price_max_seen:7900,notes:''},
+  {id:'d4',address_normalized:'88 Wythe Ave',unit:'2D',neighborhood:'williamsburg',price:6400,bedrooms:2,bathrooms:2,sqft:1280,score_tier:'👍 Strong',score_raw:67,heat:'🔥 Hot',status:'new',commute_minutes:26,in_unit_laundry:true,dishwasher:true,parking:false,storage:false,gym:true,natural_light_confidence:'Medium',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'#',sources:['StreetEasy'],source_urls:['#'],floor:2,price_min_seen:6400,price_max_seen:6400,notes:''},
+  {id:'d5',address_normalized:'14 Hudson St',unit:'9B',neighborhood:'hoboken',price:5800,bedrooms:2,bathrooms:2,sqft:1320,score_tier:'👍 Strong',score_raw:64,heat:'⏳ Normal',status:'new',commute_minutes:37,in_unit_laundry:true,dishwasher:true,parking:true,storage:true,gym:true,natural_light_confidence:'High',first_seen:'2025-04-08',last_seen:new Date().toISOString().slice(0,10),primary_url:'#',sources:['Zillow'],source_urls:['#'],floor:9,price_min_seen:5800,price_max_seen:5800,notes:''},
+  {id:'d6',address_normalized:'55 India St',unit:'2A',neighborhood:'greenpoint',price:5200,bedrooms:2,bathrooms:2,sqft:1200,score_tier:'🤔 Backup',score_raw:46,heat:'🧊 Stale',status:'new',commute_minutes:55,in_unit_laundry:false,dishwasher:true,parking:false,storage:false,gym:false,natural_light_confidence:'Low',first_seen:'2025-03-18',last_seen:'2025-04-09',primary_url:'#',sources:['Redfin'],source_urls:['#'],floor:2,price_min_seen:5200,price_max_seen:5200,notes:''},
+];
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+if (SUPABASE_URL.includes('YOUR')) {
+  all = DEMO;
+  updateStats(); render();
+  document.getElementById('ts').textContent = 'Demo mode — configure Supabase';
+} else {
+  load();
+  setInterval(load, 5 * 60 * 1000);  // auto-refresh every 5 min
+}
+</script>
+</body>
+</html>
