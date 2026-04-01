@@ -254,7 +254,7 @@ function card(l){
   const tierBadge={'🔥 Must Tour':'<span class="badge b-fire">Must Tour</span>','👍 Strong':'<span class="badge b-gold">Strong</span>','🤔 Backup':'<span class="badge b-blue">Backup</span>'}[l.score_tier]||'';
   const heatBadge=l.heat==='🔥 Hot'?'<span class="badge b-hot">🔥 Hot</span>':l.heat==='🧊 Stale'?'<span class="badge b-ice">Stale</span>':'';
   const n=l.neighborhood||'';
-  const neighPill=n?`<span class="neigh-pill">${n?(n||'').split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' '):'')}</span>`:'';
+  const neighPill=n?`<span class="neigh-pill">${n.split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' ')}</span>`:'';
   const cm=l.commute_minutes;
   const cmClass=!cm?'':cm<=35?'commute-ok':cm<=45?'commute-warn':'commute-bad';
   const ams=[l.in_unit_laundry&&'Laundry',l.dishwasher&&'Dishwasher',l.parking&&'Parking',l.storage&&'Storage',l.gym&&'Gym'].filter(Boolean);
