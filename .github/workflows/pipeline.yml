@@ -2,17 +2,10 @@ name: Apartment Pipeline
 
 on:
   schedule:
-    #       min hour day month dow
-    # 7am ET  = 11:00 UTC (EDT, UTC-4)
-    # 12pm ET = 16:00 UTC
-    # 5pm ET  = 21:00 UTC
-    # 10pm ET = 02:00 UTC
     - cron: "0 11 * * *"
     - cron: "0 16 * * *"
     - cron: "0 21 * * *"
     - cron: "0 2  * * *"
-
-  # One-click manual trigger from GitHub UI
   workflow_dispatch:
     inputs:
       source:
@@ -42,21 +35,16 @@ jobs:
           cache: pip
           cache-dependency-path: pipeline/requirements.txt
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: pip install -r pipeline/requirements.txt
-
-      - name: Install Playwright + Chromium
-        run: |
-          playwright install chromium
-          playwright install-deps chromium
 
       - name: Run pipeline
         working-directory: pipeline
         env:
-          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
-          ALERT_EMAIL:             ${{ secrets.ALERT_EMAIL }}
-          ALERT_EMAIL_PASSWORD:    ${{ secrets.ALERT_EMAIL_PASSWORD }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ALERT_EMAIL:          ${{ secrets.ALERT_EMAIL }}
+          ALERT_EMAIL_PASSWORD: ${{ secrets.ALERT_EMAIL_PASSWORD }}
         run: |
           ARGS=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
