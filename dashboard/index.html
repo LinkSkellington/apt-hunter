@@ -166,21 +166,23 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 </div>
 
 <div class="nav">
-  <div class="tab fav-tab" id="t-fav" onclick="sw('fav')">⭐ Favorites <span class="cnt" id="c-fav">0</span></div>
-  <div class="tab rev-tab" id="t-rev" onclick="sw('rev')">👀 Review <span class="cnt" id="c-rev">0</span></div>
-  <div class="tab on" id="t-top" onclick="sw('top')">Top picks <span class="cnt" id="c-top">0</span></div>
-  <div class="tab" id="t-new" onclick="sw('new')">New today <span class="cnt" id="c-new">0</span></div>
-  <div class="tab" id="t-hot" onclick="sw('hot')">🔥 Hot <span class="cnt" id="c-hot">0</span></div>
-  <div class="tab" id="t-all" onclick="sw('all')">All active <span class="cnt" id="c-all">0</span></div>
+  <div class="tab fav-tab" id="t-fav" onclick="sw('fav')">Favorites ⭐ <span class="cnt" id="c-fav">0</span></div>
+  <div class="tab rev-tab" id="t-rev" onclick="sw('rev')">For Review 👀 <span class="cnt" id="c-rev">0</span></div>
+  <div class="tab" id="t-new" onclick="sw('new')">New Today 🗓 <span class="cnt" id="c-new">0</span></div>
+  <div class="tab" id="t-hot" onclick="sw('hot')">Just Listed 🆕 <span class="cnt" id="c-hot">0</span></div>
+  <div class="tab on" id="t-top" onclick="sw('top')">Top Picks 🔥 <span class="cnt" id="c-top">0</span></div>
+  <div class="tab" id="t-str" onclick="sw('str')">So Close 💪 <span class="cnt" id="c-str">0</span></div>
+  <div class="tab" id="t-all" onclick="sw('all')">All Active 📋 <span class="cnt" id="c-all">0</span></div>
 </div>
 
 <div class="page">
   <div class="stats">
     <div class="stat"><div class="stat-label">Favorites</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div></div>
-    <div class="stat"><div class="stat-label">In Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Sent for review</div></div>
-    <div class="stat"><div class="stat-label">Must Tour</div><div class="stat-val fire" id="s-must">—</div><div class="stat-hint">Act now</div></div>
-    <div class="stat"><div class="stat-label">Strong</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Worth a look</div></div>
-    <div class="stat"><div class="stat-label">New (last run)</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
+    <div class="stat"><div class="stat-label">For Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Queued for wife</div></div>
+    <div class="stat"><div class="stat-label">Top Picks 🔥</div><div class="stat-val fire" id="s-top">—</div><div class="stat-hint">All must-have criteria</div></div>
+    <div class="stat"><div class="stat-label">Just Listed 🆕</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">Fresh + meets criteria</div></div>
+    <div class="stat"><div class="stat-label">So Close 💪</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Almost there</div></div>
+    <div class="stat"><div class="stat-label">New Today 🗓</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
     <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">All listings</div></div>
   </div>
 
@@ -197,6 +199,54 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
   </div>
 
   <div id="main"></div>
+
+  <!-- Legend -->
+  <div id="legend-wrap" style="margin-top:32px;border-top:1px solid var(--border);padding-top:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;cursor:pointer" onclick="toggleLegend()">
+      <span style="font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--text)">📖 How to read this dashboard</span>
+      <span id="legend-toggle" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">Show ▾</span>
+    </div>
+    <div id="legend-body" style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:16px">
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">⭐ Favorites</div>
+          <div style="font-size:13px;color:var(--muted)">Listings you've starred. Your personal shortlist of apartments worth revisiting.</div>
+        </div>
+        <div style="background:var(--bg2);border:1.5px solid var(--purple);border-radius:12px;padding:14px 16px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--purple)">👀 For Review</div>
+          <div style="font-size:13px;color:var(--muted)">Listings you've flagged for your wife to review. Click 👀 on any card to send it here.</div>
+        </div>
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">🗓 New Today</div>
+          <div style="font-size:13px;color:var(--muted)">Everything added in the most recent scrape run. Check this first each morning.</div>
+        </div>
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">🆕 Just Listed</div>
+          <div style="font-size:13px;color:var(--muted)">Fresh listings (≤7 days old) with a score ≥55. New to market and worth a look — act before they go.</div>
+        </div>
+        <div style="background:var(--bg2);border:1.5px solid var(--fire);border-radius:12px;padding:14px 16px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--fire)">🔥 Top Picks</div>
+          <div style="font-size:13px;color:var(--muted)">Scores ≥68, all must-have criteria pass, commute ≤45 min. These check every box — prioritize touring these.</div>
+        </div>
+        <div style="background:var(--bg2);border:1.5px solid var(--gold);border-radius:12px;padding:14px 16px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--gold)">💪 So Close</div>
+          <div style="font-size:13px;color:var(--muted)">Scores 45–67. Good options that are close but may have an unknown field, slightly longer commute, or fewer amenities.</div>
+        </div>
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">📋 All Active</div>
+          <div style="font-size:13px;color:var(--muted)">Every listing in the database that hasn't been rejected. Use neighborhood filters to narrow down.</div>
+        </div>
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">🔢 Score</div>
+          <div style="font-size:13px;color:var(--muted)">0–100 based on: commute (20pts), neighborhood (15pts), hard criteria (30pts), sqft (10pts), light (10pts), amenities (10pts), building (5pts).</div>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted)">
+        <strong style="color:var(--text)">Pipeline runs automatically</strong> at 7am, 12pm, 5pm, and 10pm ET via GitHub Actions — no manual work needed. The dashboard auto-refreshes every 5 minutes.
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
@@ -264,13 +314,15 @@ async function load(){
 // ── Stats ─────────────────────────────────────────────────────
 function updateStats(){
   const active = all.filter(l=>l.status!=='rejected');
-  const must   = active.filter(l=>l.score_tier==='🔥 Must Tour');
+  // Loosen Must Tour to score >= 70 to surface top listings despite missing sqft data
+  const must   = active.filter(l=>l.score_tier==='🔥 Must Tour'||(l.score_raw||0)>=70);
   const strong = active.filter(l=>l.score_tier==='👍 Strong');
   const hot    = active.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=55);
   const newR   = lastRunDate ? active.filter(l=>l.first_seen===lastRunDate) : active.filter(l=>daysAgo(l.first_seen)<=1);
   const favs   = active.filter(l=>favorites.has(l.id));
   const revs   = active.filter(l=>reviewed.has(l.id));
 
+  set('s-top',   must.length+strong.length);
   set('s-fav',   favs.length);
   set('s-rev',   revs.length);
   set('s-must',  must.length);
@@ -278,8 +330,11 @@ function updateStats(){
   set('s-new',   newR.length);
   set('s-total', active.length);
 
+  const soclose = active.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<68);
+  set('c-str',  soclose.length);
   set('c-fav',  favs.length);
   set('c-rev',  revs.length);
+  // c-top already counts must+strong
   set('c-top',  must.length+strong.length);
   set('c-new',  newR.length);
   set('c-hot',  hot.length);
@@ -333,26 +388,31 @@ function render(){
     return;
   }
   if(tab==='top'){
-    const must=rows.filter(l=>l.score_tier==='🔥 Must Tour');
+    const must=rows.filter(l=>l.score_tier==='🔥 Must Tour'||(l.score_raw||0)>=70);
     const strong=rows.filter(l=>l.score_tier==='👍 Strong');
-    let html=section('🔥 Must Tour',must);
+    let html=section('🔥 Top Picks',must);
     html+='<hr class="divider"/>';
-    html+=section('👍 Strong picks',strong);
+    html+=section('💪 So Close',strong);
     main.innerHTML=html; return;
   }
   if(tab==='new'){
     const newRows=lastRunDate ? rows.filter(l=>l.first_seen===lastRunDate) : rows.filter(l=>daysAgo(l.first_seen)<=1);
-    main.innerHTML=section('New since last scrape',newRows); return;
+    main.innerHTML=section('🗓 New Today',newRows); return;
   }
   if(tab==='hot'){
     const hotRows=rows.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=55);
     const warmRows=rows.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)<55);
-    let html=section('🔥 Hot — fresh & meets criteria',hotRows);
+    let html=section('🆕 Just Listed — fresh & meets criteria',hotRows);
     if(warmRows.length){ html+='<hr class="divider"/>'+section('⏳ Fresh but check details',warmRows); }
     main.innerHTML=html; return;
   }
+  if(tab==='str'){
+    const strRows=rows.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<68);
+    main.innerHTML=section('💪 So Close',strRows,'No So Close listings right now');
+    return;
+  }
   // All active — no tier filter
-  main.innerHTML=section('All active listings',rows);
+  main.innerHTML=section('All Active listings',rows);
 }
 
 function section(title, rows, emptyMsg){
@@ -402,7 +462,7 @@ function card(l){
     <div class="card-r">
       <div class="price-row">
         <button class="icon-btn${isFav?' starred':''}" onclick="event.stopPropagation();toggleFav('${l.id}')" title="${isFav?'Remove favorite':'Add to favorites'}">⭐</button>
-        <button class="icon-btn${isRev?' reviewed':''}" onclick="event.stopPropagation();toggleRev('${l.id}')" title="${isRev?'Remove from review':'Send for review'}">👀</button>
+        <button class="icon-btn${isRev?' reviewed':''}" onclick="event.stopPropagation();toggleRev('${l.id}')" title="${isRev?'Remove from review':'Send for Review'}">👀</button>
         <div class="price">$${(l.price||0).toLocaleString()}<span style="font-size:12px;color:var(--muted);font-weight:400">/mo</span></div>
       </div>
       <div class="score-wrap">
@@ -437,7 +497,7 @@ function updatePanelButtons(id){
   const fb=document.getElementById('panel-fav-btn');
   const rb=document.getElementById('panel-rev-btn');
   if(fb){ const f=favorites.has(id); fb.textContent=f?'⭐ Favorited':'☆ Favorite'; fb.classList.toggle('starred',f); }
-  if(rb){ const r=reviewed.has(id);  rb.textContent=r?'👀 In Review':'👀 Send for Review'; rb.classList.toggle('reviewed',r); }
+  if(rb){ const r=reviewed.has(id);  rb.textContent=r?'👀 In Review':'👀 For Review'; rb.classList.toggle('reviewed',r); }
 }
 
 // ── Detail panel ──────────────────────────────────────────────
@@ -462,7 +522,7 @@ function openPanel(id){
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       ${tierBadge}
       ${l.heat==='🔥 Hot'?'<span class="badge b-hot" style="font-size:13px;padding:5px 12px">🔥 Hot</span>':''}
-      ${reviewed.has(id)?'<span class="badge b-purple" style="font-size:13px;padding:5px 12px">👀 In Review</span>':''}
+      ${reviewed.has(id)?'<span class="badge b-purple" style="font-size:13px;padding:5px 12px">👀 For Review</span>':''}
     </div>
     <div class="panel-addr">${l.address_normalized||'—'}${l.unit?' #'+l.unit:''}</div>
     <div class="panel-neigh">${nd}</div>
@@ -511,6 +571,14 @@ async function setNotes(id,notes){
 }
 
 // ── Utils ─────────────────────────────────────────────────────
+function toggleLegend(){
+  const body=document.getElementById('legend-body');
+  const toggle=document.getElementById('legend-toggle');
+  const open=body.style.display==='none';
+  body.style.display=open?'grid':'none';
+  if(open) body.style.gridTemplateColumns='repeat(auto-fit,minmax(280px,1fr))';
+  toggle.textContent=open?'Hide ▴':'Show ▾';
+}
 function capNeigh(n){
   return n.split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' ');
 }
