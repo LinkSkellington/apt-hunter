@@ -33,8 +33,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .btn{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);padding:7px 16px;border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s}
 .btn:hover{background:var(--fire-bg);border-color:var(--fire);color:var(--fire)}
 /* Nav */
-.nav{background:var(--bg2);border-bottom:2px solid var(--border);display:flex;padding:0 24px;overflow-x:auto}
-.tab{padding:14px 18px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;user-select:none}
+.nav{background:var(--bg2);border-bottom:2px solid var(--border);display:flex;padding:0 24px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+.tab{padding:12px 13px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;user-select:none}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--fire);border-bottom-color:var(--fire)}
 .tab.fav-tab.on{color:var(--star);border-bottom-color:var(--star)}
