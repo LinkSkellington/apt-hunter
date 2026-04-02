@@ -176,30 +176,6 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 </div>
 
 <div class="page">
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Favorites</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div></div>
-    <div class="stat"><div class="stat-label">For Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Review for Tour</div></div>
-    <div class="stat"><div class="stat-label">Top Picks 🔥</div><div class="stat-val fire" id="s-top">—</div><div class="stat-hint">Score ≥ 65 · 🏆 Elite ≥ 68</div></div>
-    <div class="stat"><div class="stat-label">Just Listed</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤7 days + meets criteria</div></div>
-    <div class="stat"><div class="stat-label">So Close</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Meets some criteria</div></div>
-    <div class="stat"><div class="stat-label">New Today</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
-    <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">All listings</div></div>
-  </div>
-
-  <div class="filters">
-    <input class="search" type="text" placeholder="Search address or neighborhood…" id="q" oninput="render()"/>
-    <div class="chip on" id="fn-all" onclick="setNeigh('all')">All areas</div>
-    <div class="chip" id="fn-bh"  onclick="setNeigh('brooklyn heights')">Brooklyn Hts</div>
-    <div class="chip" id="fn-wb"  onclick="setNeigh('williamsburg')">Williamsburg</div>
-    <div class="chip" id="fn-cg"  onclick="setNeigh('carroll gardens')">Carroll Gdns</div>
-    <div class="chip" id="fn-ps"  onclick="setNeigh('park slope')">Park Slope</div>
-    <div class="chip" id="fn-gp"  onclick="setNeigh('greenpoint')">Greenpoint</div>
-    <div class="chip" id="fn-hob" onclick="setNeigh('hoboken')">Hoboken</div>
-    <div class="chip" id="fc"     onclick="toggleCommute()">≤ 45 min commute</div>
-  </div>
-
-  <div id="main"></div>
-
   <!-- Legend -->
   <div id="legend-wrap" style="margin-top:32px;border-top:1px solid var(--border);padding-top:20px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;cursor:pointer" onclick="toggleLegend()">
@@ -246,6 +222,31 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
       </div>
     </div>
   </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Favorites</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div></div>
+    <div class="stat"><div class="stat-label">For Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Review for Tour</div></div>
+    <div class="stat"><div class="stat-label">Top Picks 🔥</div><div class="stat-val fire" id="s-top">—</div><div class="stat-hint">Score ≥ 65 · 🏆 Elite ≥ 68</div></div>
+    <div class="stat"><div class="stat-label">Just Listed</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤7 days + meets criteria</div></div>
+    <div class="stat"><div class="stat-label">So Close</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Meets some criteria</div></div>
+    <div class="stat"><div class="stat-label">New Today</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
+    <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">All listings</div></div>
+  </div>
+
+  <div class="filters">
+    <input class="search" type="text" placeholder="Search address or neighborhood…" id="q" oninput="render()"/>
+    <div class="chip on" id="fn-all" onclick="setNeigh('all')">All areas</div>
+    <div class="chip" id="fn-bh"  onclick="setNeigh('brooklyn heights')">Brooklyn Hts</div>
+    <div class="chip" id="fn-wb"  onclick="setNeigh('williamsburg')">Williamsburg</div>
+    <div class="chip" id="fn-cg"  onclick="setNeigh('carroll gardens')">Carroll Gdns</div>
+    <div class="chip" id="fn-ps"  onclick="setNeigh('park slope')">Park Slope</div>
+    <div class="chip" id="fn-gp"  onclick="setNeigh('greenpoint')">Greenpoint</div>
+    <div class="chip" id="fn-hob" onclick="setNeigh('hoboken')">Hoboken</div>
+    <div class="chip" id="fc"     onclick="toggleCommute()">≤ 45 min commute</div>
+  </div>
+
+  <div id="main"></div>
+
 
 </div>
 
@@ -413,7 +414,6 @@ function render(){
       html+=section('🔥 Top Picks',[]);
       html+='<hr class="divider"/>';
     }
-    html+=section('💪 So Close',strong);
     main.innerHTML=html; return;
   }
   if(tab==='new'){
@@ -432,9 +432,59 @@ function render(){
     main.innerHTML=section('💪 So Close',strRows,'No So Close listings right now');
     return;
   }
-  // All active — no tier filter
-  main.innerHTML=section('All Active listings',rows);
+  // All Active — collapsible sections by tier
+  function collapsibleSection(id, title, rows, startOpen){
+    const open = collapsedSections[id] === false ? false : (startOpen !== false);
+    const arrow = open ? '▾' : '▸';
+    const body = open
+      ? `<div id="sec-body-${id}" class="stack" style="margin-bottom:8px">${rows.length ? rows.map(card).join('') : '<div class="empty"><div class="empty-i">○</div><div class="empty-t">No listings</div></div>'}</div>`
+      : `<div id="sec-body-${id}" class="stack" style="display:none;margin-bottom:8px">${rows.length ? rows.map(card).join('') : ''}</div>`;
+    return `<div style="margin-bottom:4px">
+      <div class="sec-hdr" style="cursor:pointer;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:0" onclick="toggleSection('${id}')">
+        <span class="sec-title" style="font-size:16px">${arrow} ${title}</span>
+        <span class="sec-count">${rows.length} listing${rows.length!==1?'s':''}</span>
+      </div>
+      ${body}
+    </div>`;
+  }
+
+  function sort3brAll(arr){
+    return [...arr].sort((a,b)=>{
+      const a3=(a.bedrooms||0)>=3&&(a.bathrooms||0)>=2?1:0;
+      const b3=(b.bedrooms||0)>=3&&(b.bathrooms||0)>=2?1:0;
+      if(b3!==a3) return b3-a3;
+      return (b.score_raw||0)-(a.score_raw||0);
+    });
+  }
+
+  const allElite   = sort3brAll(rows.filter(l=>(l.score_raw||0)>=68));
+  const allTop     = sort3brAll(rows.filter(l=>(l.score_raw||0)>=65&&(l.score_raw||0)<68));
+  const allSoClose = rows.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<65);
+  const allOther   = rows.filter(l=>(l.score_raw||0)<45);
+  const newRows2   = lastRunDate ? rows.filter(l=>l.first_seen===lastRunDate) : rows.filter(l=>daysAgo(l.first_seen)<=1);
+
+  let html='';
+  if(newRows2.length) html+=collapsibleSection('all-new','🗓 New Today',newRows2,true);
+  html+=collapsibleSection('all-elite','🏆 Elite Picks',allElite,true);
+  html+=collapsibleSection('all-top','🔥 Top Picks',allTop,true);
+  html+=collapsibleSection('all-soclose','💪 So Close',allSoClose,false);
+  html+=collapsibleSection('all-other','📋 Other',allOther,false);
+  main.innerHTML=html;
 }
+
+let collapsedSections={};
+function toggleSection(id){
+  const body=document.getElementById('sec-body-'+id);
+  const hdr=body.previousElementSibling;
+  const titleEl=hdr.querySelector('.sec-title');
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  collapsedSections[id]=!open;
+  // Update arrow in title
+  titleEl.textContent=titleEl.textContent.replace(open?'▾':'▸', open?'▸':'▾');
+}
+// dummy closing brace placeholder
+function _dummy(){}
 
 function section(title, rows, emptyMsg){
   const empty=emptyMsg||'No listings here yet';
