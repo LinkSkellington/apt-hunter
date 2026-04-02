@@ -177,20 +177,20 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 
 <div class="page">
   <!-- Legend -->
-  <div id="legend-wrap" style="margin-top:32px;border-top:1px solid var(--border);padding-top:20px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;cursor:pointer" onclick="toggleLegend()">
-      <span style="font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--text)">📖 How to read this dashboard</span>
-      <span id="legend-toggle" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">Show ▾</span>
+  <div style="margin-bottom:20px">
+    <div class="sec-hdr" style="cursor:pointer;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:0" onclick="toggleLegend()">
+      <span class="sec-title" style="font-size:16px" id="legend-arrow-title">▸ How to read this dashboard</span>
+      <span class="sec-count">tap to expand</span>
     </div>
-    <div id="legend-body" style="display:none">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:16px">
+    <div id="legend-body" style="display:none;margin-top:4px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:10px">
         <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">⭐ Favorites</div>
           <div style="font-size:13px;color:var(--muted)">Listings you've starred. Your personal shortlist of apartments worth revisiting.</div>
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--purple);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--purple)">👀 For Review</div>
-          <div style="font-size:13px;color:var(--muted)">Listings you've flagged for your wife to review. Click 👀 on any card to send it here.</div>
+          <div style="font-size:13px;color:var(--muted)">Listings flagged for your wife to review. Click 👀 on any card to send it here.</div>
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">🗓 New Today</div>
@@ -198,27 +198,27 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">🆕 Just Listed</div>
-          <div style="font-size:13px;color:var(--muted)">Fresh listings (≤7 days old) with a score ≥55. New to market and worth a look — act before they go.</div>
+          <div style="font-size:13px;color:var(--muted)">Fresh listings (≤7 days old) with a score ≥45. New to market — act before they go.</div>
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--fire);border-radius:12px;padding:14px 16px">
-          <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--fire)">🔥 Top Picks</div>
-          <div style="font-size:13px;color:var(--muted)">Score ≥ 65. 🏆 Elite (68+) are the absolute best given available data. 🔥 Top Picks (65–67) are excellent options one step below.</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--fire)">🏆 Elite + 🔥 Top Picks</div>
+          <div style="font-size:13px;color:var(--muted)">🏆 Elite (score 68-69) are the absolute best given current data. 🔥 Top Picks (65-67) are excellent options just below.</div>
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--gold);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--gold)">💪 So Close</div>
-          <div style="font-size:13px;color:var(--muted)">Scores 45–67. Good options that are close but may have an unknown field, slightly longer commute, or fewer amenities.</div>
+          <div style="font-size:13px;color:var(--muted)">Scores 45–64. Good options that meet some criteria — may have an unknown field or slightly longer commute.</div>
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">📋 All Active</div>
-          <div style="font-size:13px;color:var(--muted)">Every listing in the database that hasn't been rejected. Use neighborhood filters to narrow down.</div>
+          <div style="font-size:13px;color:var(--muted)">Every listing not rejected. Broken into collapsible sections by tier. Use neighborhood filters to narrow down.</div>
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">🔢 Score</div>
-          <div style="font-size:13px;color:var(--muted)">0–100 based on: commute (20pts), neighborhood (15pts), hard criteria (30pts), sqft (10pts), light (10pts), amenities (10pts), building (5pts).</div>
+          <div style="font-size:13px;color:var(--muted)">0–100: commute (20pts), neighborhood (15pts), hard criteria (30pts), sqft (10pts), light (10pts), amenities (10pts), building (5pts).</div>
         </div>
       </div>
       <div style="background:var(--bg3);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted)">
-        <strong style="color:var(--text)">Pipeline runs automatically</strong> at 7am, 12pm, 5pm, and 10pm ET via GitHub Actions — no manual work needed. The dashboard auto-refreshes every 5 minutes.
+        <strong style="color:var(--text)">Pipeline runs automatically</strong> at 7am, 12pm, 5pm, and 10pm ET — no manual work needed. Dashboard auto-refreshes every 5 minutes.
       </div>
     </div>
   </div>
@@ -400,20 +400,9 @@ function render(){
     }
     const elite   = sort3br(rows.filter(l=>(l.score_raw||0)>=68));
     const topRest = sort3br(rows.filter(l=>(l.score_raw||0)>=65&&(l.score_raw||0)<68));
-    const strong  = rows.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<65);
     let html='';
-    if(elite.length){
-      html+=section('🏆 Elite Picks',elite);
-      html+='<hr class="divider"/>';
-    }
-    if(topRest.length){
-      html+=section('🔥 Top Picks',topRest);
-      html+='<hr class="divider"/>';
-    }
-    if(!elite.length&&!topRest.length){
-      html+=section('🔥 Top Picks',[]);
-      html+='<hr class="divider"/>';
-    }
+    html+=collapsibleSection('top-elite','🏆 Elite Picks',elite,true);
+    html+=collapsibleSection('top-picks','🔥 Top Picks',topRest,true);
     main.innerHTML=html; return;
   }
   if(tab==='new'){
@@ -644,11 +633,10 @@ async function setNotes(id,notes){
 // ── Utils ─────────────────────────────────────────────────────
 function toggleLegend(){
   const body=document.getElementById('legend-body');
-  const toggle=document.getElementById('legend-toggle');
+  const title=document.getElementById('legend-arrow-title');
   const open=body.style.display==='none';
-  body.style.display=open?'grid':'none';
-  if(open) body.style.gridTemplateColumns='repeat(auto-fit,minmax(280px,1fr))';
-  toggle.textContent=open?'Hide ▴':'Show ▾';
+  body.style.display=open?'block':'none';
+  title.textContent=(open?'▾':'▸')+' How to read this dashboard';
 }
 function capNeigh(n){
   return n.split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' ');
