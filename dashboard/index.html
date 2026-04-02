@@ -149,6 +149,24 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+/* Dislike */
+.icon-btn.disliked{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+/* Slide-out animation */
+@keyframes slideOut{
+  0%{opacity:1;transform:translateX(0) scaleY(1);max-height:400px;margin-bottom:12px}
+  60%{opacity:.3;transform:translateX(60px) scaleY(.8);max-height:400px;margin-bottom:12px}
+  100%{opacity:0;transform:translateX(120px) scaleY(0);max-height:0;margin-bottom:0;padding:0;border:none}
+}
+.card.sliding-out{animation:slideOut .5s ease-in forwards;overflow:hidden;pointer-events:none}
+/* Toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg2);border-radius:12px;padding:14px 20px;font-size:14px;display:flex;align-items:center;gap:14px;z-index:500;box-shadow:0 4px 20px rgba(0,0,0,.25);min-width:280px;max-width:420px}
+.toast-msg{flex:1;font-weight:500}
+.toast-progress{position:absolute;bottom:0;left:0;height:3px;background:var(--red);border-radius:0 0 12px 12px;transition:width linear}
+.toast-undo{background:var(--bg2);color:var(--text);border:none;border-radius:7px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.toast-undo:hover{background:var(--bg3)}
+/* Rejected tab */
+.tab.rej-tab.on{color:var(--red);border-bottom-color:var(--red)}
+.tab.rej-tab.on .cnt{background:var(--red-bg);color:var(--red)}
 </style>
 </head>
 <body>
@@ -173,6 +191,7 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
   <div class="tab on" id="t-top" onclick="sw('top')">Top Picks 🔥 <span class="cnt" id="c-top">0</span></div>
   <div class="tab" id="t-str" onclick="sw('str')">So Close <span class="cnt" id="c-str">0</span></div>
   <div class="tab" id="t-all" onclick="sw('all')">All Active <span class="cnt" id="c-all">0</span></div>
+  <div class="tab rej-tab" id="t-rej" onclick="sw('rej')">Rejected 🚫 <span class="cnt" id="c-rej">0</span></div>
 </div>
 
 <div class="page">
@@ -266,10 +285,31 @@ let all=[], tab='top', neigh='all', commuteFilter=false, currentPanelId=null, la
 
 // Favorites + Review stored in localStorage — persist across sessions
 let favorites = new Set(JSON.parse(localStorage.getItem('apt_favorites')||'[]'));
-let reviewed   = new Set(JSON.parse(localStorage.getItem('apt_reviewed')||'[]'));
+let reviewed  = new Set(JSON.parse(localStorage.getItem('apt_reviewed')||'[]'));
+let disliked  = new Set(JSON.parse(localStorage.getItem('apt_disliked')||'[]'));
+// Track when each listing was disliked (for 12-day expiry)
+let dislikedAt = JSON.parse(localStorage.getItem('apt_disliked_at')||'{}');
 
 function saveFavorites(){ localStorage.setItem('apt_favorites', JSON.stringify([...favorites])); }
 function saveReviewed(){  localStorage.setItem('apt_reviewed',  JSON.stringify([...reviewed]));  }
+function saveDisliked(){
+  localStorage.setItem('apt_disliked',    JSON.stringify([...disliked]));
+  localStorage.setItem('apt_disliked_at', JSON.stringify(dislikedAt));
+}
+
+// Purge disliked listings older than 12 days on load
+function purgeOldDislikes(){
+  const cutoff = Date.now() - 12*24*60*60*1000;
+  let changed = false;
+  for(const id of [...disliked]){
+    if((dislikedAt[id]||0) < cutoff){
+      disliked.delete(id);
+      delete dislikedAt[id];
+      changed = true;
+    }
+  }
+  if(changed) saveDisliked();
+}
 
 const today = new Date(); today.setHours(0,0,0,0);
 
@@ -293,6 +333,7 @@ async function load(){
   const btn=document.getElementById('refresh-btn');
   btn.textContent='↻ Loading…';
   document.getElementById('ts').textContent='Refreshing…';
+  purgeOldDislikes();
   try{
     const fields='id,address_normalized,unit,neighborhood,price,price_min_seen,price_max_seen,'+
       'bedrooms,bathrooms,sqft,floor,is_ground_floor,in_unit_laundry,dishwasher,parking,storage,gym,'+
@@ -314,7 +355,8 @@ async function load(){
 
 // ── Stats ─────────────────────────────────────────────────────
 function updateStats(){
-  const active = all.filter(l=>l.status!=='rejected');
+  const active = all.filter(l=>l.status!=='rejected'&&!disliked.has(l.id));
+  const rejectedLocal = all.filter(l=>disliked.has(l.id));
   // Loosen Must Tour to score >= 70 to surface top listings despite missing sqft data
   // Mutually exclusive score bands — no overlap
   const topPicks = active.filter(l=>(l.score_raw||0)>=65);
@@ -330,6 +372,7 @@ function updateStats(){
   set('s-strong',soClose.length);
   set('s-new',   newR.length);
   set('s-total', active.length);
+  set('c-rej',   rejectedLocal.length);
 
   set('c-str',  soClose.length);
   set('c-fav',  favs.length);
@@ -365,7 +408,7 @@ function toggleCommute(){
 function filtered(){
   const q=document.getElementById('q').value.toLowerCase();
   // All active (not rejected) — no score tier filter for All Active
-  let list=all.filter(l=>l.status!=='rejected');
+  let list=all.filter(l=>l.status!=='rejected'&&!disliked.has(l.id));
   if(q) list=list.filter(l=>(l.address_normalized||'').toLowerCase().includes(q)||(l.neighborhood||'').toLowerCase().includes(q));
   if(neigh!=='all') list=list.filter(l=>(l.neighborhood||'').toLowerCase()===neigh);
   if(commuteFilter) list=list.filter(l=>(l.commute_minutes||99)<=45);
@@ -377,6 +420,19 @@ function render(){
   const main=document.getElementById('main');
   const rows=filtered();
 
+  if(tab==='rej'){
+    const rejRows=all.filter(l=>disliked.has(l.id));
+    // Show days remaining before purge
+    const rejWithDays=rejRows.map(l=>{
+      const daysLeft=Math.max(0,12-Math.floor((Date.now()-(dislikedAt[l.id]||Date.now()))/86400000));
+      return{...l,_daysLeft:daysLeft};
+    }).sort((a,b)=>a._daysLeft-b._daysLeft);
+    const html=rejWithDays.length
+      ? '<div class="sec-hdr"><span class="sec-title">🚫 Rejected</span><span class="sec-count">Removed after 12 days</span></div>'
+        +'<div class="stack">'+rejWithDays.map(l=>cardRejected(l)).join('')+'</div>'
+      : '<div class="empty"><div class="empty-i">○</div><div class="empty-t">No rejected listings</div></div>';
+    main.innerHTML=html; return;
+  }
   if(tab==='fav'){
     const favRows=all.filter(l=>favorites.has(l.id)&&l.status!=='rejected');
     main.innerHTML=section('⭐ Favorites',favRows,'No favorites yet — star a listing to add it here');
@@ -523,6 +579,7 @@ function card(l){
       <div class="price-row">
         <button class="icon-btn${isFav?' starred':''}" onclick="event.stopPropagation();toggleFav('${l.id}')" title="${isFav?'Remove favorite':'Add to favorites'}">⭐</button>
         <button class="icon-btn${isRev?' reviewed':''}" onclick="event.stopPropagation();toggleRev('${l.id}')" title="${isRev?'Remove from review':'Send for Review'}">👀</button>
+        <button class="icon-btn" onclick="event.stopPropagation();dislikeCard('${l.id}',this)" title="Dislike — moves to Rejected">👎</button>
         <div class="price">$${(l.price||0).toLocaleString()}<span style="font-size:12px;color:var(--muted);font-weight:400">/mo</span></div>
       </div>
       <div class="score-wrap">
@@ -539,6 +596,109 @@ function card(l){
 }
 
 // ── Favorites & Review ────────────────────────────────────────
+// ── Toast ─────────────────────────────────────────────────────────
+let toastTimer=null, toastProgressTimer=null, pendingDislikeId=null;
+
+function showUndoToast(id, name){
+  // Clear any existing toast
+  clearToast();
+  pendingDislikeId=id;
+  const duration=6000;
+  const toast=document.createElement('div');
+  toast.className='toast';
+  toast.id='undo-toast';
+  toast.innerHTML=`
+    <span class="toast-msg">👎 "${name}" moved to Rejected</span>
+    <button class="toast-undo" onclick="undoDislike()">Undo</button>
+    <div class="toast-progress" id="toast-bar" style="width:100%"></div>`;
+  document.body.appendChild(toast);
+  // Animate progress bar
+  const bar=document.getElementById('toast-bar');
+  let start=null;
+  function step(ts){
+    if(!start) start=ts;
+    const pct=Math.max(0,100-((ts-start)/duration)*100);
+    if(bar) bar.style.width=pct+'%';
+    if(pct>0 && document.getElementById('undo-toast')) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+  toastTimer=setTimeout(()=>{ clearToast(); }, duration);
+}
+
+function clearToast(){
+  clearTimeout(toastTimer);
+  const t=document.getElementById('undo-toast');
+  if(t) t.remove();
+  pendingDislikeId=null;
+}
+
+function undoDislike(){
+  if(!pendingDislikeId) return;
+  const id=pendingDislikeId;
+  disliked.delete(id);
+  delete dislikedAt[id];
+  saveDisliked();
+  clearToast();
+  updateStats(); render();
+}
+
+function dislikeCard(id, btnEl){
+  const l=all.find(x=>x.id===id); if(!l) return;
+  const name=(l.address_normalized||'listing').split(',')[0];
+  // Animate card sliding out
+  const cardEl=btnEl.closest('.card');
+  if(cardEl){
+    cardEl.classList.add('sliding-out');
+    setTimeout(()=>{
+      disliked.add(id);
+      dislikedAt[id]=Date.now();
+      saveDisliked();
+      // Remove from favorites/review if present
+      favorites.delete(id); saveFavorites();
+      reviewed.delete(id);  saveReviewed();
+      updateStats(); render();
+      showUndoToast(id, name);
+    }, 480);
+  } else {
+    disliked.add(id);
+    dislikedAt[id]=Date.now();
+    saveDisliked();
+    updateStats(); render();
+    showUndoToast(id, name);
+  }
+}
+
+function cardRejected(l){
+  const days=l._daysLeft||0;
+  const urgency=days<=3?'var(--red)':days<=7?'var(--amber)':'var(--muted)';
+  return`<div class="card backup" style="opacity:.7">
+    <div>
+      <div class="card-top">
+        <span class="addr">${l.address_normalized||'—'}</span>
+        <span class="unit-lbl">${l.unit?'#'+l.unit:''}</span>
+        ${(l.neighborhood||'')?`<span class="neigh-pill">${capNeigh(l.neighborhood)}</span>`:''}
+        <span class="badge b-red">Rejected</span>
+      </div>
+      <div class="meta" style="font-size:13px;color:var(--muted)">
+        <span>${l.bedrooms||'?'} bd / ${l.bathrooms||'?'} ba</span>
+        ${l.sqft?`<span>${l.sqft.toLocaleString()} sqft</span>`:''}
+      </div>
+    </div>
+    <div class="card-r">
+      <div class="price">$${(l.price||0).toLocaleString()}<span style="font-size:12px;color:var(--muted);font-weight:400">/mo</span></div>
+      <div style="font-size:11px;font-family:'DM Mono',monospace;color:${urgency};text-align:right">${days}d until removed</div>
+      <button class="icon-btn" onclick="undoDislikeById('${l.id}')" style="font-size:12px;padding:5px 10px;width:100%;justify-content:center" title="Restore listing">↩ Restore</button>
+    </div>
+  </div>`;
+}
+
+function undoDislikeById(id){
+  disliked.delete(id);
+  delete dislikedAt[id];
+  saveDisliked();
+  updateStats(); render();
+}
+
 function toggleFav(id){
   if(favorites.has(id)) favorites.delete(id); else favorites.add(id);
   saveFavorites(); updateStats(); render();
