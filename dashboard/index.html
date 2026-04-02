@@ -34,15 +34,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .btn:hover{background:var(--fire-bg);border-color:var(--fire);color:var(--fire)}
 /* Nav */
 .nav{background:var(--bg2);border-bottom:2px solid var(--border);display:flex;padding:0 24px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
-.tab{padding:12px 13px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;user-select:none}
-.tab:hover{color:var(--text)}
-.tab.on{color:var(--fire);border-bottom-color:var(--fire)}
-.tab.fav-tab.on{color:var(--star);border-bottom-color:var(--star)}
-.tab.rev-tab.on{color:var(--purple);border-bottom-color:var(--purple)}
-.cnt{font-family:'DM Mono',monospace;font-size:13px;background:var(--bg3);padding:3px 9px;border-radius:20px;margin-left:6px;color:var(--text);font-weight:700}
-.tab.on .cnt{background:var(--fire-bg);color:var(--fire)}
-.tab.fav-tab.on .cnt{background:var(--star-bg);color:var(--star)}
-.tab.rev-tab.on .cnt{background:var(--purple-bg);color:var(--purple)}
+/* tab CSS removed */
 /* Page */
 .page{padding:24px;max-width:1300px}
 .stats{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
@@ -173,9 +165,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .toast-progress{position:absolute;bottom:0;left:0;height:3px;background:var(--red);border-radius:0 0 12px 12px;transition:width linear}
 .toast-undo{background:var(--bg2);color:var(--text);border:none;border-radius:7px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
 .toast-undo:hover{background:var(--bg3)}
-/* Rejected tab */
-.tab.rej-tab.on{color:var(--red);border-bottom-color:var(--red)}
-.tab.rej-tab.on .cnt{background:var(--red-bg);color:var(--red)}
+/* Rejected tab CSS removed */
 </style>
 </head>
 <body>
@@ -192,13 +182,6 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
   </div>
 </div>
 
-  <div class="tab rev-tab" id="t-rev" onclick="sw('rev')">For Review 👀 <span class="cnt" id="c-rev">0</span></div>
-  <div class="tab" id="t-new" onclick="sw('new')">New Today <span class="cnt" id="c-new">0</span></div>
-  <div class="tab" id="t-hot" onclick="sw('hot')">Just Listed <span class="cnt" id="c-hot">0</span></div>
-  <div class="tab on" id="t-top" onclick="sw('top')">Top Picks 🔥 <span class="cnt" id="c-top">0</span></div>
-  <div class="tab" id="t-str" onclick="sw('str')">So Close <span class="cnt" id="c-str">0</span></div>
-  <div class="tab" id="t-all" onclick="sw('all')">All Active <span class="cnt" id="c-all">0</span></div>
-  <div class="tab rej-tab" id="t-rej" onclick="sw('rej')">Rejected 🚫 <span class="cnt" id="c-rej">0</span></div>
 </div>
 
 <div class="page">
