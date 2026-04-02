@@ -51,8 +51,8 @@ class SupabaseClient:
 
     def get_dashboard_listings(
         self,
-        status_exclude: list[str] | None = None,
-        tier_exclude: list[str] | None = None,
+        status_exclude: Optional[list] = None,
+        tier_exclude: Optional[list] = None,
         limit: int = 500,
     ) -> list[dict]:
         """Used by the dashboard API endpoint."""
@@ -148,6 +148,7 @@ def _to_row(l: dict) -> dict:
         "address":                 (l.get("address") or "")[:500],
         "address_normalized":      (l.get("address_normalized") or "")[:500],
         "unit":                    (l.get("unit") or "")[:50],
+        "neighborhood":            (l.get("neighborhood") or "")[:100],
         "neighborhood":            (l.get("neighborhood") or "")[:100],
         "price":                   l.get("price"),
         "price_min_seen":          l.get("price"),
