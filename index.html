@@ -265,7 +265,8 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
   <div class="panel-actions">
     <button class="panel-close" onclick="closePanel()">← Back</button>
     <button class="panel-action-btn" id="panel-fav-btn" onclick="toggleFavPanel()">☆ Favorite</button>
-    <button class="panel-action-btn" id="panel-rev-btn" onclick="toggleRevPanel()">👀 Send for Review</button>
+    <button class="panel-action-btn" id="panel-rev-btn" onclick="toggleRevPanel()">👀 For Review</button>
+    <button class="panel-action-btn" id="panel-dis-btn" onclick="dislikeFromPanel()" style="margin-left:auto;border-color:var(--border)">👎 Dislike</button>
   </div>
   <div id="panel-body"></div>
 </div>
@@ -346,7 +347,8 @@ async function load(){
 
 // ── Stats ─────────────────────────────────────────────────────
 function updateStats(){
-  const active = all.filter(l=>l.status!=='rejected'&&!disliked.has(l.id));
+  // Active = not rejected, not disliked, not in review
+  const active = all.filter(l=>l.status!=='rejected'&&!disliked.has(l.id)&&!reviewed.has(l.id));
   const rejectedLocal = all.filter(l=>disliked.has(l.id));
   // Loosen Must Tour to score >= 70 to surface top listings despite missing sqft data
   // Mutually exclusive score bands — no overlap
@@ -413,8 +415,8 @@ function toggleCommute(){
 }
 function filtered(){
   const q=document.getElementById('q').value.toLowerCase();
-  // All active (not rejected) — no score tier filter for All Active
-  let list=all.filter(l=>l.status!=='rejected'&&!disliked.has(l.id));
+  // Exclude rejected AND reviewed — reviewed only appear in For Review tab
+  let list=all.filter(l=>l.status!=='rejected'&&!disliked.has(l.id)&&!reviewed.has(l.id));
   if(q) list=list.filter(l=>(l.address_normalized||'').toLowerCase().includes(q)||(l.neighborhood||'').toLowerCase().includes(q));
   if(neigh!=='all') list=list.filter(l=>(l.neighborhood||'').toLowerCase()===neigh);
   if(commuteFilter) list=list.filter(l=>(l.commute_minutes||99)<=45);
@@ -508,6 +510,7 @@ function render(){
     });
   }
 
+  // reviewed listings are excluded from rows already via filtered()
   const allElite   = sort3brAll(rows.filter(l=>(l.score_raw||0)>=68));
   const allTop     = sort3brAll(rows.filter(l=>(l.score_raw||0)>=65&&(l.score_raw||0)<68));
   const allSoClose = rows.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<65);
@@ -718,12 +721,32 @@ function toggleRev(id){
 function toggleFavPanel(){ if(currentPanelId) toggleFav(currentPanelId); }
 function toggleRevPanel(){  if(currentPanelId) toggleRev(currentPanelId); }
 
+function dislikeFromPanel(){
+  if(!currentPanelId) return;
+  const id=currentPanelId;
+  const l=all.find(x=>x.id===id);
+  const name=(l&&l.address_normalized||'listing').split(',')[0];
+  closePanel();
+  // Small delay so panel closes before slide animation
+  setTimeout(()=>{
+    disliked.add(id);
+    dislikedAt[id]=Date.now();
+    saveDisliked();
+    favorites.delete(id); saveFavorites();
+    reviewed.delete(id);  saveReviewed();
+    updateStats(); render();
+    showUndoToast(id, name);
+  }, 200);
+}
+
 function updatePanelButtons(id){
   if(currentPanelId!==id) return;
   const fb=document.getElementById('panel-fav-btn');
   const rb=document.getElementById('panel-rev-btn');
+  const db=document.getElementById('panel-dis-btn');
   if(fb){ const f=favorites.has(id); fb.textContent=f?'⭐ Favorited':'☆ Favorite'; fb.classList.toggle('starred',f); }
   if(rb){ const r=reviewed.has(id);  rb.textContent=r?'👀 In Review':'👀 For Review'; rb.classList.toggle('reviewed',r); }
+  if(db){ const d=disliked.has(id); db.textContent=d?'🚫 Disliked':'👎 Dislike'; db.style.borderColor=d?'var(--red)':''; db.style.background=d?'var(--red-bg)':''; db.style.color=d?'var(--red)':''; }
 }
 
 // ── Detail panel ──────────────────────────────────────────────
