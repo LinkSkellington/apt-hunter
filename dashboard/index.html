@@ -179,7 +179,7 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
   <div class="stats">
     <div class="stat"><div class="stat-label">Favorites</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div></div>
     <div class="stat"><div class="stat-label">For Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Review for Tour</div></div>
-    <div class="stat"><div class="stat-label">Top Picks 🔥</div><div class="stat-val fire" id="s-top">—</div><div class="stat-hint">Score ≥ 80</div></div>
+    <div class="stat"><div class="stat-label">Top Picks 🔥</div><div class="stat-val fire" id="s-top">—</div><div class="stat-hint">Score ≥ 65 · 🏆 Elite ≥ 68</div></div>
     <div class="stat"><div class="stat-label">Just Listed</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤7 days + meets criteria</div></div>
     <div class="stat"><div class="stat-label">So Close</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Meets some criteria</div></div>
     <div class="stat"><div class="stat-label">New Today</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
@@ -226,7 +226,7 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--fire);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--fire)">🔥 Top Picks</div>
-          <div style="font-size:13px;color:var(--muted)">Scores ≥80, all must-have criteria pass, commute ≤45 min. These check every box — prioritize touring these.</div>
+          <div style="font-size:13px;color:var(--muted)">Score ≥ 65. 🏆 Elite (68+) are the absolute best given available data. 🔥 Top Picks (65–67) are excellent options one step below.</div>
         </div>
         <div style="background:var(--bg2);border:1.5px solid var(--gold);border-radius:12px;padding:14px 16px">
           <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--gold)">💪 So Close</div>
@@ -316,14 +316,14 @@ function updateStats(){
   const active = all.filter(l=>l.status!=='rejected');
   // Loosen Must Tour to score >= 70 to surface top listings despite missing sqft data
   // Mutually exclusive score bands — no overlap
-  const topPicks = active.filter(l=>(l.score_raw||0)>=80);
-  const soClose  = active.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<80);
+  const topPicks = active.filter(l=>(l.score_raw||0)>=65);
+  const soClose  = active.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<65);
   const hot      = active.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=45);
   const newR     = lastRunDate ? active.filter(l=>l.first_seen===lastRunDate) : active.filter(l=>daysAgo(l.first_seen)<=1);
   const favs     = active.filter(l=>favorites.has(l.id));
   const revs     = active.filter(l=>reviewed.has(l.id));
 
-  set('s-top',   topPicks.length);
+  set('s-top',   active.filter(l=>(l.score_raw||0)>=65).length);
   set('s-fav',   favs.length);
   set('s-rev',   revs.length);
   set('s-strong',soClose.length);
@@ -333,7 +333,8 @@ function updateStats(){
   set('c-str',  soClose.length);
   set('c-fav',  favs.length);
   set('c-rev',  revs.length);
-  set('c-top',  topPicks.length);
+  const topPicksAll=active.filter(l=>(l.score_raw||0)>=65);
+  set('c-top',  topPicksAll.length);
   set('c-new',  newR.length);
   set('c-hot',  hot.length);
   set('c-all',  active.length);
@@ -386,21 +387,32 @@ function render(){
     return;
   }
   if(tab==='top'){
-    // Top Picks: 3BR+ with 2BA+ float to the top section
-    // Top Picks = score >= 68, So Close = 45-67 — mutually exclusive
-    const allMust=rows.filter(l=>(l.score_raw||0)>=80);
-    const must3br=allMust.filter(l=>(l.bedrooms||0)>=3&&(l.bathrooms||0)>=2);
-    const mustRest=allMust.filter(l=>!((l.bedrooms||0)>=3&&(l.bathrooms||0)>=2));
-    const strong=rows.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<80);
-    let html='';
-    if(must3br.length){
-      html+=section('🔥 Top Picks — 3BR+ Priority',must3br);
-      html+='<hr class="divider"/>';
-      html+=section('🔥 Top Picks',mustRest);
-    } else {
-      html=section('🔥 Top Picks',allMust);
+    // Elite = 68-69, Top Picks = 65-67, So Close = 45-64
+    // Within each tier, 3BR+ with 2BA+ float to top
+    function sort3br(arr){
+      return [...arr].sort((a,b)=>{
+        const a3=(a.bedrooms||0)>=3&&(a.bathrooms||0)>=2?1:0;
+        const b3=(b.bedrooms||0)>=3&&(b.bathrooms||0)>=2?1:0;
+        if(b3!==a3) return b3-a3;
+        return (b.score_raw||0)-(a.score_raw||0);
+      });
     }
-    html+='<hr class="divider"/>';
+    const elite   = sort3br(rows.filter(l=>(l.score_raw||0)>=68));
+    const topRest = sort3br(rows.filter(l=>(l.score_raw||0)>=65&&(l.score_raw||0)<68));
+    const strong  = rows.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<65);
+    let html='';
+    if(elite.length){
+      html+=section('🏆 Elite Picks',elite);
+      html+='<hr class="divider"/>';
+    }
+    if(topRest.length){
+      html+=section('🔥 Top Picks',topRest);
+      html+='<hr class="divider"/>';
+    }
+    if(!elite.length&&!topRest.length){
+      html+=section('🔥 Top Picks',[]);
+      html+='<hr class="divider"/>';
+    }
     html+=section('💪 So Close',strong);
     main.innerHTML=html; return;
   }
@@ -416,7 +428,7 @@ function render(){
     main.innerHTML=html; return;
   }
   if(tab==='str'){
-    const strRows=rows.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<80);  // strictly below Top Picks threshold
+    const strRows=rows.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<65);  // strictly below Top Picks threshold
     main.innerHTML=section('💪 So Close',strRows,'No So Close listings right now');
     return;
   }
