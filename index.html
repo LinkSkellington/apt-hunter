@@ -357,25 +357,27 @@ function updateStats(){
   const hot      = active.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=45);
   const newR     = lastRunDate ? active.filter(l=>l.first_seen===lastRunDate) : active.filter(l=>daysAgo(l.first_seen)<=1);
   const favs     = active.filter(l=>favorites.has(l.id));
-  const revs     = active.filter(l=>reviewed.has(l.id));
+  // reviewed and rejected count from ALL listings (not filtered active)
+  const revCount = all.filter(l=>reviewed.has(l.id)&&!disliked.has(l.id)).length;
+  const rejCount = rejectedLocal.length;
 
-  set('s-top',   active.filter(l=>(l.score_raw||0)>=65).length);
+  set('s-top',   topPicks.length);
   set('s-fav',   favs.length);
-  set('s-rev',   revs.length);
+  set('s-rev',   revCount);
+  set('s-hot',   hot.length);
   set('s-strong',soClose.length);
   set('s-new',   newR.length);
   set('s-total', active.length);
-  set('c-rej',   rejectedLocal.length);
-  set('s-rej',   rejectedLocal.length);
+  set('s-rej',   rejCount);
 
   set('c-str',  soClose.length);
   set('c-fav',  favs.length);
-  set('c-rev',  revs.length);
-  const topPicksAll=active.filter(l=>(l.score_raw||0)>=65);
-  set('c-top',  topPicksAll.length);
+  set('c-rev',  revCount);
+  set('c-top',  topPicks.length);
   set('c-new',  newR.length);
   set('c-hot',  hot.length);
   set('c-all',  active.length);
+  set('c-rej',  rejCount);
 }
 
 // ── Tabs ──────────────────────────────────────────────────────
