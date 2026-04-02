@@ -134,6 +134,10 @@ def _score_hard(l: dict) -> tuple[int, bool]:
     if baths is not None and baths < 2.0:
         pts -= 15; ok = False
 
+    # Bonus: 3+ bedrooms with 2+ bathrooms — prioritized in Top Picks
+    if beds is not None and baths is not None and beds >= 3 and baths >= 2.0:
+        pts += 8
+
     sqft = l.get("sqft")
     if sqft is not None and sqft < 1200:
         pts -= 10; ok = False
