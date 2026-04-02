@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-:root {
+:root{
   --bg:#f5f3ef;--bg2:#ffffff;--bg3:#f0ede8;--bg4:#e8e4de;
   --border:#e0dbd3;--border2:#c8c2b8;
   --text:#1a1814;--muted:#6b6560;--muted2:#9e9890;
@@ -18,8 +18,9 @@
   --green:#1e7a45;--green-bg:#eaf5ee;
   --red:#c0392b;--red-bg:#fdf0ee;
   --amber:#9a6b0a;--amber-bg:#fdf6e3;
-  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
-  --shadow2:0 4px 12px rgba(0,0,0,0.10),0 2px 4px rgba(0,0,0,0.06);
+  --star:#d4a843;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow2:0 4px 12px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -34,14 +35,16 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .tab{padding:14px 18px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;user-select:none}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--fire);border-bottom-color:var(--fire)}
+.tab-fav.on{color:var(--star);border-bottom-color:var(--star)}
 .cnt{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);padding:2px 7px;border-radius:20px;margin-left:6px;color:var(--muted2);font-weight:400}
 .tab.on .cnt{background:var(--fire-bg);color:var(--fire)}
+.tab-fav.on .cnt{background:#fdf6e3;color:var(--star)}
 .page{padding:24px;max-width:1300px}
 .stats{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
 .stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;flex:1;min-width:130px;box-shadow:var(--shadow)}
-.stat-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
-.stat-val{font-family:'Lora',serif;font-size:30px;line-height:1;letter-spacing:-0.01em}
-.stat-val.fire{color:var(--fire)}.stat-val.gold{color:var(--gold)}.stat-val.blue{color:var(--blue)}.stat-val.ice{color:var(--ice)}
+.stat-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.stat-val{font-family:'Lora',serif;font-size:30px;line-height:1;letter-spacing:-.01em}
+.stat-val.fire{color:var(--fire)}.stat-val.gold{color:var(--gold)}.stat-val.blue{color:var(--blue)}.stat-val.ice{color:var(--ice)}.stat-val.star{color:var(--star)}
 .stat-hint{font-size:12px;color:var(--muted2);margin-top:4px}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
 .search{background:var(--bg2);border:1.5px solid var(--border);padding:9px 14px;border-radius:8px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;width:240px;box-shadow:var(--shadow)}
@@ -55,14 +58,20 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .sec-count{font-size:13px;color:var(--muted)}
 .divider{border:none;border-top:1px solid var(--border);margin:24px 0}
 .stack{display:flex;flex-direction:column;gap:12px}
-.card{background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:20px 22px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;box-shadow:var(--shadow)}
+/* Card */
+.card{background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:20px 22px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;box-shadow:var(--shadow);position:relative}
 .card:hover{border-color:var(--border2);box-shadow:var(--shadow2);transform:translateY(-1px)}
 .card.must{border-left:4px solid var(--fire)}
 .card.strong{border-left:4px solid var(--gold)}
 .card.backup{border-left:4px solid var(--blue)}
 .card.skip{border-left:4px solid var(--muted2);opacity:.55}
-.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.addr{font-size:16px;font-weight:600;letter-spacing:-0.01em;color:var(--text)}
+.card.favorited{border-top:2px solid var(--star)}
+/* Star button */
+.star-btn{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;font-size:20px;line-height:1;padding:4px;opacity:.4;transition:all .15s;z-index:10}
+.star-btn:hover{opacity:1;transform:scale(1.2)}
+.star-btn.starred{opacity:1;color:var(--star)}
+.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-right:32px}
+.addr{font-size:16px;font-weight:600;letter-spacing:-.01em;color:var(--text)}
 .unit-lbl{color:var(--muted);font-size:14px;font-weight:400}
 .neigh-pill{background:var(--blue-bg);color:var(--blue);border:1px solid #c0d8f0;font-size:13px;font-weight:600;padding:3px 10px;border-radius:20px}
 .badge{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:5px;font-weight:500;white-space:nowrap}
@@ -82,7 +91,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .meta .commute-bad{color:var(--red);font-weight:600}
 .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .card-r{display:flex;flex-direction:column;align-items:flex-end;gap:10px;min-width:130px}
-.price{font-family:'Lora',serif;font-size:22px;font-weight:600;letter-spacing:-0.01em;color:var(--text)}
+.price{font-family:'Lora',serif;font-size:22px;font-weight:600;letter-spacing:-.01em;color:var(--text)}
 .score-wrap{text-align:center;background:var(--bg3);border-radius:10px;padding:8px 14px;min-width:70px}
 .score-num{font-family:'Lora',serif;font-size:24px;line-height:1;font-weight:600}
 .score-lbl{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px}
@@ -94,13 +103,17 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .empty{text-align:center;padding:56px 24px;color:var(--muted);background:var(--bg2);border-radius:14px;border:1px dashed var(--border)}
 .empty-i{font-size:32px;margin-bottom:12px;opacity:.4}
 .empty-t{font-size:15px}
-.overlay{position:fixed;inset:0;background:rgba(30,24,20,0.45);z-index:200;display:none;backdrop-filter:blur(2px)}
+/* Panel */
+.overlay{position:fixed;inset:0;background:rgba(30,24,20,.45);z-index:200;display:none;backdrop-filter:blur(2px)}
 .overlay.open{display:block}
-.panel{position:fixed;right:0;top:0;bottom:0;width:500px;background:var(--bg2);border-left:1px solid var(--border);z-index:201;overflow-y:auto;padding:28px;display:none;box-shadow:-4px 0 24px rgba(0,0,0,0.12)}
+.panel{position:fixed;right:0;top:0;bottom:0;width:500px;background:var(--bg2);border-left:1px solid var(--border);z-index:201;overflow-y:auto;padding:28px;display:none;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
 .panel.open{display:block}
-.panel-close{background:var(--bg3);border:1.5px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;font-weight:500;margin-bottom:22px;transition:all .15s}
+.panel-close{background:var(--bg3);border:1.5px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;margin-bottom:22px;transition:all .15s}
 .panel-close:hover{background:var(--bg4);color:var(--text)}
-.panel-addr{font-family:'Lora',serif;font-size:24px;font-weight:600;letter-spacing:-0.02em;margin-bottom:4px;line-height:1.2}
+.panel-star{float:right;background:none;border:1.5px solid var(--border);border-radius:8px;padding:8px 14px;font-size:18px;cursor:pointer;transition:all .15s;margin-bottom:22px;margin-left:8px}
+.panel-star:hover{border-color:var(--star)}
+.panel-star.starred{border-color:var(--star);background:#fdf6e3}
+.panel-addr{font-family:'Lora',serif;font-size:24px;font-weight:600;letter-spacing:-.02em;margin-bottom:4px;line-height:1.2}
 .panel-neigh{font-size:14px;color:var(--muted);margin-bottom:10px}
 .panel-price{font-family:'Lora',serif;font-size:32px;font-weight:600;color:var(--fire);margin-bottom:20px;line-height:1}
 .psec{margin-bottom:20px}
@@ -114,9 +127,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .view-btn{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:white;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;transition:all .15s}
 .view-btn:hover{background:#1a4f8c}
 .view-btn-muted{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);color:var(--muted);border:1.5px solid var(--border);padding:10px 18px;border-radius:8px;font-size:14px;font-weight:500;cursor:default}
-.dupe-card{background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px}
-.dupe-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:15px;font-weight:600}
-.dupe-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:5px 0;border-top:1px solid var(--border)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -125,7 +135,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 <body>
 <script>
 const SUPABASE_URL='https://lexlvpwtffkarcahszrk.supabase.co';
-const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
+const SUPABASE_ANON_KEY='sbpublishable_9knEQŁOȘWF4PW6GL2Mye8Q_CXTYKDNC';
 </script>
 <div class="header">
   <div class="logo">Apt Hunter <span class="logo-sub">Brooklyn + Hoboken · Jun 1 · 2BD+</span></div>
@@ -135,28 +145,29 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
   </div>
 </div>
 <div class="nav">
+  <div class="tab tab-fav" id="t-fav" onclick="sw('fav')">⭐ Favorites <span class="cnt" id="c-fav">0</span></div>
   <div class="tab on" id="t-top" onclick="sw('top')">Top picks <span class="cnt" id="c-top">0</span></div>
   <div class="tab" id="t-new" onclick="sw('new')">New today <span class="cnt" id="c-new">0</span></div>
   <div class="tab" id="t-hot" onclick="sw('hot')">🔥 Hot <span class="cnt" id="c-hot">0</span></div>
   <div class="tab" id="t-all" onclick="sw('all')">All active <span class="cnt" id="c-all">0</span></div>
-  <div class="tab" id="t-dup" onclick="sw('dup')">Discrepancies <span class="cnt" id="c-dup">0</span></div>
 </div>
 <div class="page">
   <div class="stats">
+    <div class="stat"><div class="stat-label">Favorites</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div></div>
     <div class="stat"><div class="stat-label">Must Tour</div><div class="stat-val fire" id="s-must">—</div><div class="stat-hint">Act now</div></div>
     <div class="stat"><div class="stat-label">Strong</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Worth a look</div></div>
-    <div class="stat"><div class="stat-label">New (24h)</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Fresh today</div></div>
-    <div class="stat"><div class="stat-label">Hot listings</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤ 7 days old</div></div>
+    <div class="stat"><div class="stat-label">New (last run)</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
+    <div class="stat"><div class="stat-label">🔥 Hot</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤ 7 days, meets criteria</div></div>
     <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">Pass filter</div></div>
-    <div class="stat"><div class="stat-label">Avg rent</div><div class="stat-val ice" id="s-avg">—</div><div class="stat-hint">All active</div></div>
   </div>
   <div class="filters">
     <input class="search" type="text" placeholder="Search address or neighborhood…" id="q" oninput="render()"/>
     <div class="chip on" id="fn-all" onclick="setNeigh('all')">All areas</div>
     <div class="chip" id="fn-bh" onclick="setNeigh('brooklyn heights')">Brooklyn Hts</div>
     <div class="chip" id="fn-wb" onclick="setNeigh('williamsburg')">Williamsburg</div>
-    <div class="chip" id="fn-ch" onclick="setNeigh('cobble hill')">Cobble Hill</div>
+    <div class="chip" id="fn-cg" onclick="setNeigh('carroll gardens')">Carroll Gdns</div>
     <div class="chip" id="fn-ps" onclick="setNeigh('park slope')">Park Slope</div>
+    <div class="chip" id="fn-gp" onclick="setNeigh('greenpoint')">Greenpoint</div>
     <div class="chip" id="fn-hob" onclick="setNeigh('hoboken')">Hoboken</div>
     <div class="chip" id="fc" onclick="toggleCommute()">≤ 45 min commute</div>
   </div>
@@ -164,92 +175,168 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 </div>
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
-  <button class="panel-close" onclick="closePanel()">← Back to listings</button>
+  <div style="display:flex;align-items:center;margin-bottom:22px">
+    <button class="panel-close" onclick="closePanel()" style="margin-bottom:0">← Back to listings</button>
+    <button class="panel-star" id="panel-star-btn" onclick="toggleFavPanel()">☆</button>
+  </div>
   <div id="panel-body"></div>
 </div>
 <script>
-let all=[],dupes=[],tab='top',neigh='all',commuteFilter=false;
-const today=new Date();today.setHours(0,0,0,0);
-async function sbGet(table,select,filter){
+// ── Config ────────────────────────────────────────────────────
+let all=[], tab='top', neigh='all', commuteFilter=false;
+// Favorites stored in localStorage so they persist across sessions
+let favorites = new Set(JSON.parse(localStorage.getItem('apt_favorites')||'[]'));
+let lastRunDate = localStorage.getItem('apt_last_run') || null;
+let currentPanelId = null;
+
+const today = new Date(); today.setHours(0,0,0,0);
+
+function saveFavorites(){
+  localStorage.setItem('apt_favorites', JSON.stringify([...favorites]));
+}
+
+// ── Supabase ──────────────────────────────────────────────────
+async function sbGet(table, select, filter){
   const url=`${SUPABASE_URL}/rest/v1/${table}?select=${encodeURIComponent(select)}${filter?'&'+filter:''}`;
-  const r=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`,'Content-Type':'application/json'}});
-  if(!r.ok)throw new Error(`Supabase ${r.status}`);
+  const r=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
+  if(!r.ok) throw new Error(`Supabase ${r.status}`);
   return r.json();
 }
 async function sbPatch(table,id,fields){
-  if(SUPABASE_ANON_KEY==='REPLACE_SUPABASE_KEY')return;
-  await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(fields)});
+  if(SUPABASE_ANON_KEY==='REPLACE_SUPABASE_KEY') return;
+  await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{
+    method:'PATCH',
+    headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},
+    body:JSON.stringify(fields)
+  });
 }
+
+// ── Load ──────────────────────────────────────────────────────
 async function load(){
   const btn=document.getElementById('refresh-btn');
   btn.textContent='↻ Loading…';
   document.getElementById('ts').textContent='Refreshing…';
   try{
-    const fields='id,address_normalized,unit,neighborhood,price,price_min_seen,price_max_seen,bedrooms,bathrooms,sqft,floor,is_ground_floor,in_unit_laundry,dishwasher,parking,storage,gym,natural_light_confidence,commute_minutes,commute_ok,primary_url,source_urls,sources,building_name,building_reviews,broker_fee,score_raw,score_tier,heat,status,notes,first_seen,last_seen';
-    const[rows,drows]=await Promise.all([sbGet('listings',fields,'status=neq.rejected&order=score_raw.desc'),sbGet('price_discrepancies','*','').catch(()=>[])]);
-    all=rows;dupes=drows;
+    const fields='id,address_normalized,unit,neighborhood,price,price_min_seen,price_max_seen,bedrooms,bathrooms,sqft,floor,is_ground_floor,in_unit_laundry,dishwasher,parking,storage,gym,natural_light_confidence,commute_minutes,commute_ok,primary_url,source_urls,sources,building_name,score_raw,score_tier,heat,status,notes,first_seen,last_seen';
+    all=await sbGet('listings',fields,'status=neq.rejected&order=score_raw.desc');
+
+    // Detect last run date from most recent first_seen
+    const dates = all.map(l=>l.first_seen).filter(Boolean).sort().reverse();
+    if(dates.length) lastRunDate = dates[0];
+
   }catch(e){
-    console.error(e);if(!all.length)all=DEMO;
+    console.error(e);
+    if(!all.length) all=DEMO;
     document.getElementById('ts').textContent='Demo mode';
-    btn.textContent='↻ Refresh';updateStats();render();return;
   }
-  updateStats();render();
+  updateStats(); render();
   document.getElementById('ts').textContent=new Date().toLocaleTimeString();
   btn.textContent='↻ Refresh';
 }
+
+// ── Stats ─────────────────────────────────────────────────────
 function updateStats(){
   const active=all.filter(l=>l.status!=='rejected'&&l.score_tier!=='❌ Skip');
   const must=active.filter(l=>l.score_tier==='🔥 Must Tour');
   const strong=active.filter(l=>l.score_tier==='👍 Strong');
-  const hot=active.filter(l=>l.heat==='🔥 Hot');
-  const newT=active.filter(l=>daysAgo(l.first_seen)===0);
-  const prices=active.map(l=>l.price).filter(Boolean);
-  const avg=prices.length?Math.round(prices.reduce((a,b)=>a+b,0)/prices.length):0;
-  set('s-must',must.length);set('s-strong',strong.length);set('s-new',newT.length);
-  set('s-hot',hot.length);set('s-total',active.length);
-  set('s-avg',avg?'$'+avg.toLocaleString():'—');
-  set('c-top',must.length+strong.length);set('c-new',newT.length);
-  set('c-hot',hot.length);set('c-all',active.length);set('c-dup',dupes.length);
+  // Hot = ≤7 days AND score ≥ 55 (actually meets criteria)
+  const hot=active.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=55);
+  // New since last run
+  const newSinceRun=lastRunDate ? active.filter(l=>l.first_seen===lastRunDate) : active.filter(l=>daysAgo(l.first_seen)<=1);
+  const favs=[...favorites].filter(id=>all.find(l=>l.id===id));
+
+  set('s-fav',   favs.length);
+  set('s-must',  must.length);
+  set('s-strong',strong.length);
+  set('s-new',   newSinceRun.length);
+  set('s-hot',   hot.length);
+  set('s-total', active.length);
+
+  set('c-fav',  favs.length);
+  set('c-top',  must.length+strong.length);
+  set('c-new',  newSinceRun.length);
+  set('c-hot',  hot.length);
+  set('c-all',  active.length);
 }
+
+// ── Tabs ──────────────────────────────────────────────────────
 function sw(t){
-  tab=t;document.querySelectorAll('.tab').forEach(el=>el.classList.remove('on'));
-  document.getElementById('t-'+t).classList.add('on');render();
+  tab=t;
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('on'));
+  document.getElementById('t-'+t).classList.add('on');
+  render();
 }
+
+// ── Filters ───────────────────────────────────────────────────
 function setNeigh(n){
-  neigh=n;document.querySelectorAll('[id^="fn-"]').forEach(el=>el.classList.remove('on'));
-  const map={'all':'fn-all','brooklyn heights':'fn-bh','williamsburg':'fn-wb','cobble hill':'fn-ch','park slope':'fn-ps','hoboken':'fn-hob'};
-  if(map[n])document.getElementById(map[n]).classList.add('on');render();
+  neigh=n;
+  document.querySelectorAll('[id^="fn-"]').forEach(el=>el.classList.remove('on'));
+  const map={'all':'fn-all','brooklyn heights':'fn-bh','williamsburg':'fn-wb','carroll gardens':'fn-cg','park slope':'fn-ps','greenpoint':'fn-gp','hoboken':'fn-hob'};
+  if(map[n]) document.getElementById(map[n])?.classList.add('on');
+  render();
 }
-function toggleCommute(){commuteFilter=!commuteFilter;document.getElementById('fc').classList.toggle('on',commuteFilter);render();}
+function toggleCommute(){
+  commuteFilter=!commuteFilter;
+  document.getElementById('fc').classList.toggle('on',commuteFilter);
+  render();
+}
+
 function filtered(){
   const q=document.getElementById('q').value.toLowerCase();
   let list=all.filter(l=>l.status!=='rejected'&&l.score_tier!=='❌ Skip');
-  if(q)list=list.filter(l=>(l.address_normalized||'').toLowerCase().includes(q)||(l.neighborhood||'').toLowerCase().includes(q));
-  if(neigh!=='all')list=list.filter(l=>(l.neighborhood||'').toLowerCase()===neigh);
-  if(commuteFilter)list=list.filter(l=>(l.commute_minutes||99)<=45);
+  if(q) list=list.filter(l=>(l.address_normalized||'').toLowerCase().includes(q)||(l.neighborhood||'').toLowerCase().includes(q));
+  if(neigh!=='all') list=list.filter(l=>(l.neighborhood||'').toLowerCase()===neigh);
+  if(commuteFilter) list=list.filter(l=>(l.commute_minutes||99)<=45);
   return list.sort((a,b)=>(b.score_raw||0)-(a.score_raw||0));
 }
+
+// ── Render ────────────────────────────────────────────────────
 function render(){
   const main=document.getElementById('main');
-  if(tab==='dup'){main.innerHTML=renderDupes();return;}
-  const rows=filtered();let html='';
+  const rows=filtered();
+
+  if(tab==='fav'){
+    const favRows=all.filter(l=>favorites.has(l.id));
+    main.innerHTML=section('⭐ Your Favorites',favRows);
+    return;
+  }
   if(tab==='top'){
-    html+=section('🔥 Must Tour',rows.filter(l=>l.score_tier==='🔥 Must Tour'));
+    let html=section('🔥 Must Tour',rows.filter(l=>l.score_tier==='🔥 Must Tour'));
     html+='<hr class="divider"/>';
     html+=section('👍 Strong picks',rows.filter(l=>l.score_tier==='👍 Strong'));
-  }else if(tab==='new'){
-    html+=section('New in last 24 hours',rows.filter(l=>daysAgo(l.first_seen)<=0));
-  }else if(tab==='hot'){
-    html+=section('🔥 Hot — move fast',rows.filter(l=>l.heat==='🔥 Hot'));
-    html+='<hr class="divider"/>';
-    html+=section('⏳ Normal',rows.filter(l=>l.heat==='⏳ Normal').slice(0,12));
-  }else{html+=section('All active listings',rows);}
-  main.innerHTML=html;
+    main.innerHTML=html;
+    return;
+  }
+  if(tab==='new'){
+    // New since last scrape run
+    const newRows = lastRunDate
+      ? rows.filter(l=>l.first_seen===lastRunDate)
+      : rows.filter(l=>daysAgo(l.first_seen)<=1);
+    main.innerHTML=section('New since last scrape',newRows);
+    return;
+  }
+  if(tab==='hot'){
+    // Hot = fresh (≤7 days) AND meaningfully meets criteria (score ≥ 55)
+    const hotRows=rows.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=55);
+    const warmRows=rows.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)<55);
+    let html=section('🔥 Hot — fresh & meets criteria',hotRows);
+    if(warmRows.length){
+      html+='<hr class="divider"/>';
+      html+=section('⏳ Fresh but check details',warmRows);
+    }
+    main.innerHTML=html;
+    return;
+  }
+  main.innerHTML=section('All active listings',rows);
 }
+
 function section(title,rows){
   return`<div class="sec-hdr"><span class="sec-title">${title}</span><span class="sec-count">${rows.length} listing${rows.length!==1?'s':''}</span></div><div class="stack">${rows.length?rows.map(card).join(''):'<div class="empty"><div class="empty-i">○</div><div class="empty-t">No listings here yet</div></div>'}</div>`;
 }
+
+// ── Card ──────────────────────────────────────────────────────
 function card(l){
+  const isFav=favorites.has(l.id);
   const tierCls={'🔥 Must Tour':'must','👍 Strong':'strong','🤔 Backup':'backup','❌ Skip':'skip'}[l.score_tier]||'backup';
   const tierBadge={'🔥 Must Tour':'<span class="badge b-fire">Must Tour</span>','👍 Strong':'<span class="badge b-gold">Strong</span>','🤔 Backup':'<span class="badge b-blue">Backup</span>'}[l.score_tier]||'';
   const heatBadge=l.heat==='🔥 Hot'?'<span class="badge b-hot">🔥 Hot</span>':l.heat==='🧊 Stale'?'<span class="badge b-ice">Stale</span>':'';
@@ -261,13 +348,15 @@ function card(l){
   const lightBadge=l.natural_light_confidence==='High'?'<span class="badge b-green">☀ Good light</span>':l.natural_light_confidence==='Low'?'<span class="badge b-red">Low light</span>':'';
   const sc=l.score_raw||0;
   const scColor=sc>=75?'var(--fire)':sc>=55?'var(--gold)':sc>=35?'var(--blue)':'var(--muted)';
-  return`<div class="card ${tierCls}" onclick="openPanel('${l.id}')">
+
+  return`<div class="card ${tierCls}${isFav?' favorited':''}" onclick="openPanel('${l.id}')">
+    <button class="star-btn${isFav?' starred':''}" onclick="event.stopPropagation();toggleFav('${l.id}')" title="${isFav?'Remove from favorites':'Add to favorites'}">${isFav?'⭐':'☆'}</button>
     <div>
       <div class="card-top"><span class="addr">${l.address_normalized||'—'}</span><span class="unit-lbl">${l.unit?'#'+l.unit:''}</span>${neighPill}${tierBadge}${heatBadge}</div>
       <div class="meta">
         <span><span class="v">${l.bedrooms||'?'} bd</span> / <span class="v">${l.bathrooms||'?'} ba</span></span>
-        <span><span class="v">${l.sqft?l.sqft.toLocaleString():'?'}</span> sqft</span>
-        <span>Floor <span class="v">${l.floor||'?'}</span></span>
+        ${l.sqft?`<span><span class="v">${l.sqft.toLocaleString()}</span> sqft</span>`:''}
+        ${l.floor?`<span>Floor <span class="v">${l.floor}</span></span>`:''}
         ${cm?`<span><span class="${cmClass}">${cm} min</span> to Midtown</span>`:''}
       </div>
       <div class="tags">${ams.map(a=>`<span class="badge b-muted">${a}</span>`).join('')}${lightBadge}</div>
@@ -280,21 +369,46 @@ function card(l){
     </div>
   </div>`;
 }
+
+// ── Favorites ─────────────────────────────────────────────────
+function toggleFav(id){
+  if(favorites.has(id)) favorites.delete(id);
+  else favorites.add(id);
+  saveFavorites();
+  updateStats();
+  render();
+  // Update panel star if open
+  if(currentPanelId===id){
+    const btn=document.getElementById('panel-star-btn');
+    if(btn){btn.textContent=favorites.has(id)?'⭐':'☆';btn.classList.toggle('starred',favorites.has(id));}
+  }
+}
+function toggleFavPanel(){
+  if(currentPanelId) toggleFav(currentPanelId);
+}
+
+// ── Detail panel ──────────────────────────────────────────────
 function openPanel(id){
   const l=all.find(x=>x.id===id);if(!l)return;
+  currentPanelId=id;
+  const isFav=favorites.has(id);
+  const starBtn=document.getElementById('panel-star-btn');
+  starBtn.textContent=isFav?'⭐':'☆';
+  starBtn.classList.toggle('starred',isFav);
+
   const ams=[['In-unit laundry',l.in_unit_laundry],['Dishwasher',l.dishwasher],['Parking',l.parking],['Storage',l.storage],['Gym',l.gym]];
   const sc=l.score_raw||0;
   const scColor=sc>=75?'var(--fire)':sc>=55?'var(--gold)':sc>=35?'var(--blue)':'var(--muted)';
   const cm=l.commute_minutes;
   const cmColor=!cm?'var(--muted)':cm<=35?'var(--green)':cm<=45?'var(--amber)':'var(--red)';
-  const srcs=Array.isArray(l.source_urls)?l.source_urls:[];
-  const primaryUrl=l.primary_url||(srcs.length?srcs[0]:'');
   const n=l.neighborhood||'';
-  const nd=n?(n||'').split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' '):'';
+  const nd=n.split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' ');
+  const primaryUrl=l.primary_url||'';
   const viewBtn=primaryUrl
     ?`<a class="view-btn" href="${primaryUrl}" target="_blank" rel="noopener noreferrer">↗ View listing</a>`
     :`<span class="view-btn-muted">No listing URL available</span>`;
   const tierBadge={'🔥 Must Tour':`<span class="badge b-fire" style="font-size:13px;padding:5px 12px">🔥 Must Tour</span>`,'👍 Strong':`<span class="badge b-gold" style="font-size:13px;padding:5px 12px">👍 Strong</span>`,'🤔 Backup':`<span class="badge b-blue" style="font-size:13px;padding:5px 12px">🤔 Backup</span>`}[l.score_tier]||'';
+
   document.getElementById('panel-body').innerHTML=`
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${tierBadge}${l.heat==='🔥 Hot'?'<span class="badge b-hot" style="font-size:13px;padding:5px 12px">🔥 Hot</span>':''}</div>
     <div class="panel-addr">${l.address_normalized||'—'}${l.unit?' #'+l.unit:''}</div>
@@ -303,39 +417,58 @@ function openPanel(id){
     <div class="psec"><div class="psec-title">Details</div><div class="pgrid">
       <div class="pfield"><div class="pfl">Bedrooms</div><div class="pfv">${l.bedrooms||'?'}</div></div>
       <div class="pfield"><div class="pfl">Bathrooms</div><div class="pfv">${l.bathrooms||'?'}</div></div>
-      <div class="pfield"><div class="pfl">Square feet</div><div class="pfv">${l.sqft?l.sqft.toLocaleString():'?'}</div></div>
-      <div class="pfield"><div class="pfl">Floor</div><div class="pfv">${l.floor||'Unknown'}</div></div>
-      <div class="pfield"><div class="pfl">Commute</div><div class="pfv" style="color:${cmColor}">${cm||'?'} min</div></div>
-      <div class="pfield"><div class="pfl">Natural light</div><div class="pfv">${l.natural_light_confidence||'?'}</div></div>
+      <div class="pfield"><div class="pfl">Square feet</div><div class="pfv">${l.sqft?l.sqft.toLocaleString():'Not listed'}</div></div>
+      <div class="pfield"><div class="pfl">Floor</div><div class="pfv">${l.floor||'Not listed'}</div></div>
+      <div class="pfield"><div class="pfl">Commute est.</div><div class="pfv" style="color:${cmColor}">${cm?cm+' min':'Unknown'}</div></div>
+      <div class="pfield"><div class="pfl">Natural light</div><div class="pfv">${l.natural_light_confidence||'Unknown'}</div></div>
       <div class="pfield"><div class="pfl">Score</div><div class="pfv" style="color:${scColor}">${sc} / 100</div></div>
       <div class="pfield"><div class="pfl">Days listed</div><div class="pfv">${Math.max(0,Math.floor((Date.now()-new Date(l.first_seen))/86400000))}</div></div>
     </div></div>
     <div class="psec"><div class="psec-title">Amenities</div><div style="display:flex;gap:8px;flex-wrap:wrap">${ams.map(([n,v])=>`<span class="badge ${v?'b-green':'b-red'}" style="font-size:13px;padding:5px 10px">${v?'✓':'✗'} ${n}</span>`).join('')}</div></div>
-    <div class="psec"><div class="psec-title">View listing</div>${viewBtn}${srcs.length>1?`<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">${srcs.slice(1).map(u=>`<a href="${u}" target="_blank" rel="noopener noreferrer" style="color:var(--blue);font-size:13px;font-family:'DM Mono',monospace;text-decoration:none">↗ ${u.replace(/^https?:\/\//,'').split('/')[0]}</a>`).join('')}</div>`:''}</div>
+    <div class="psec"><div class="psec-title">View listing</div>${viewBtn}</div>
     <div class="psec"><div class="psec-title">Status</div><select class="sel" style="width:100%;font-size:14px;padding:10px" onchange="setStatus('${l.id}',this.value)">${['new','reviewing','saved','touring','contacted','rejected'].map(s=>`<option${l.status===s?' selected':''}>${s}</option>`).join('')}</select></div>
     <div class="psec"><div class="psec-title">Notes</div><textarea class="notes" placeholder="Add your notes here…" onchange="setNotes('${l.id}',this.value)">${l.notes||''}</textarea></div>`;
+
   document.getElementById('overlay').classList.add('open');
   document.getElementById('panel').classList.add('open');
 }
-function closePanel(){document.getElementById('overlay').classList.remove('open');document.getElementById('panel').classList.remove('open');}
-function renderDupes(){
-  if(!dupes.length)return'<div class="empty"><div class="empty-i">○</div><div class="empty-t">No price discrepancies found</div></div>';
-  let html=`<div class="sec-hdr"><span class="sec-title">Price discrepancies</span><span class="sec-count">${dupes.length} found</span></div>`;
-  dupes.forEach(d=>{html+=`<div class="dupe-card"><div class="dupe-hdr"><span>${d.address_normalized||'—'}${d.unit?' #'+d.unit:''}</span><span class="badge b-amber">$${((d.price_max_seen||0)-(d.price_min_seen||0)).toLocaleString()} diff</span></div>${(d.sources||[]).map(s=>`<div class="dupe-row"><span>${s}</span><span style="font-weight:600">$${(d.price_min_seen||0).toLocaleString()} – $${(d.price_max_seen||0).toLocaleString()}</span></div>`).join('')}</div>`;});
-  return html;
+function closePanel(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+  currentPanelId=null;
 }
-async function setStatus(id,status){const l=all.find(x=>x.id===id);if(l)l.status=status;updateStats();render();await sbPatch('listings',id,{status}).catch(e=>console.warn(e));}
-async function setNotes(id,notes){const l=all.find(x=>x.id===id);if(l)l.notes=notes;await sbPatch('listings',id,{notes}).catch(e=>console.warn(e));}
+
+// ── Write-back ────────────────────────────────────────────────
+async function setStatus(id,status){
+  const l=all.find(x=>x.id===id);if(l)l.status=status;
+  updateStats();render();
+  await sbPatch('listings',id,{status}).catch(e=>console.warn(e));
+}
+async function setNotes(id,notes){
+  const l=all.find(x=>x.id===id);if(l)l.notes=notes;
+  await sbPatch('listings',id,{notes}).catch(e=>console.warn(e));
+}
+
+// ── Utils ─────────────────────────────────────────────────────
 function daysAgo(d){if(!d)return 999;const dt=new Date(d);dt.setHours(0,0,0,0);return Math.floor((today-dt)/86400000);}
 function fmtDays(d){const n=daysAgo(d);if(n===0)return'Today';if(n===1)return'1 day ago';return`${n} days ago`;}
 function set(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+
+// ── Demo data ─────────────────────────────────────────────────
 const DEMO=[
-  {id:'d1',address_normalized:'45 Pineapple St',unit:'4A',neighborhood:'brooklyn heights',price:6800,bedrooms:2,bathrooms:2,sqft:1350,score_tier:'🔥 Must Tour',score_raw:87,heat:'🔥 Hot',status:'new',commute_minutes:30,in_unit_laundry:true,dishwasher:true,parking:false,storage:true,gym:true,natural_light_confidence:'High',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'https://streeteasy.com',sources:['StreetEasy'],source_urls:['https://streeteasy.com'],floor:4,price_min_seen:6800,price_max_seen:6800,notes:''},
-  {id:'d2',address_normalized:'220 N 10th St',unit:'3B',neighborhood:'williamsburg',price:7100,bedrooms:2,bathrooms:2,sqft:1420,score_tier:'🔥 Must Tour',score_raw:81,heat:'🔥 Hot',status:'reviewing',commute_minutes:28,in_unit_laundry:true,dishwasher:true,parking:true,storage:false,gym:true,natural_light_confidence:'High',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'https://zillow.com',sources:['Zillow'],source_urls:['https://zillow.com'],floor:3,price_min_seen:7100,price_max_seen:7400,notes:'Corner unit'},
-  {id:'d3',address_normalized:'150 Joralemon St',unit:'7C',neighborhood:'brooklyn heights',price:7900,bedrooms:3,bathrooms:2,sqft:1650,score_tier:'👍 Strong',score_raw:72,heat:'⏳ Normal',status:'saved',commute_minutes:32,in_unit_laundry:true,dishwasher:true,parking:false,storage:true,gym:false,natural_light_confidence:'High',first_seen:'2025-04-05',last_seen:new Date().toISOString().slice(0,10),primary_url:'https://corcoran.com',sources:['Corcoran'],source_urls:['https://corcoran.com'],floor:7,price_min_seen:7900,price_max_seen:7900,notes:''},
+  {id:'d1',address_normalized:'45 Pineapple St',unit:'4A',neighborhood:'brooklyn heights',price:6800,bedrooms:2,bathrooms:2,sqft:1350,score_tier:'🔥 Must Tour',score_raw:87,heat:'🔥 Hot',status:'new',commute_minutes:30,in_unit_laundry:true,dishwasher:true,parking:false,storage:true,gym:true,natural_light_confidence:'High',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'https://google.com/search?q=45+Pineapple+St+Brooklyn+rental',sources:['RentCast'],floor:4,price_min_seen:6800,price_max_seen:6800,notes:''},
+  {id:'d2',address_normalized:'220 N 10th St',unit:'3B',neighborhood:'williamsburg',price:7100,bedrooms:2,bathrooms:2,sqft:1420,score_tier:'🔥 Must Tour',score_raw:81,heat:'🔥 Hot',status:'new',commute_minutes:28,in_unit_laundry:true,dishwasher:true,parking:true,storage:false,gym:true,natural_light_confidence:'High',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'https://google.com/search?q=220+N+10th+St+Williamsburg+rental',sources:['RentCast'],floor:3,price_min_seen:7100,price_max_seen:7100,notes:''},
+  {id:'d3',address_normalized:'150 Joralemon St',unit:'7C',neighborhood:'brooklyn heights',price:7900,bedrooms:3,bathrooms:2,sqft:1650,score_tier:'👍 Strong',score_raw:72,heat:'⏳ Normal',status:'new',commute_minutes:32,in_unit_laundry:true,dishwasher:true,parking:false,storage:true,gym:false,natural_light_confidence:'High',first_seen:'2025-04-05',last_seen:new Date().toISOString().slice(0,10),primary_url:'https://google.com/search?q=150+Joralemon+St+Brooklyn+rental',sources:['RentCast'],floor:7,price_min_seen:7900,price_max_seen:7900,notes:''},
 ];
-if(SUPABASE_ANON_KEY==='REPLACE_SUPABASE_KEY'){all=DEMO;updateStats();render();document.getElementById('ts').textContent='Demo mode';}
-else{load();setInterval(load,5*60*1000);}
+
+// ── Boot ──────────────────────────────────────────────────────
+if(SUPABASE_ANON_KEY==='REPLACE_SUPABASE_KEY'){
+  all=DEMO;updateStats();render();
+  document.getElementById('ts').textContent='Demo mode';
+}else{
+  load();
+  setInterval(load,5*60*1000);
+}
 </script>
 </body>
 </html>
