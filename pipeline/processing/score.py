@@ -14,8 +14,8 @@ Points breakdown:
   ─────────────────────100
 
 Tier:
-  🔥 Must Tour   ≥ 75 AND all hard criteria pass AND commute ≤ 45 min
-  👍 Strong      55–74, OR ≥ 75 with commute 45–60 min
+  🔥 Must Tour   ≥ 68 AND all hard criteria pass AND commute ≤ 45 min
+  👍 Strong      45–67, OR ≥ 68 with commute 45–60 min
   🤔 Backup      35–54
   ❌ Skip        < 35 OR any hard fail
 
@@ -248,11 +248,11 @@ def _detect_neighborhood(l: dict) -> Optional[str]:
 def _tier(score: int, hard_ok: bool, commute_min: Optional[int]) -> str:
     if not hard_ok:
         return "❌ Skip"
-    if score >= 75 and (commute_min is None or commute_min <= 45):
+    if score >= 68 and (commute_min is None or commute_min <= 45):
         return "🔥 Must Tour"
-    if score >= 75:   # commute 45-60
+    if score >= 68:   # commute 45-60
         return "👍 Strong"
-    if score >= 55:
+    if score >= 45:
         return "👍 Strong"
     if score >= 35:
         return "🤔 Backup"
