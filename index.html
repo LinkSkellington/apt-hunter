@@ -46,11 +46,20 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 /* Page */
 .page{padding:24px;max-width:1300px}
 .stats{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
-.stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;flex:1;min-width:110px;box-shadow:var(--shadow)}
+.stat{background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;flex:1;min-width:110px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s;user-select:none}
+.stat:hover{border-color:var(--border2);box-shadow:var(--shadow2);transform:translateY(-1px)}
+.stat.active{border-color:var(--fire);box-shadow:0 0 0 2px var(--fire-bg),var(--shadow2);transform:translateY(-1px)}
+.stat.active-star{border-color:var(--star);box-shadow:0 0 0 2px var(--star-bg),var(--shadow2)}
+.stat.active-purple{border-color:var(--purple);box-shadow:0 0 0 2px var(--purple-bg),var(--shadow2)}
+.stat.active-gold{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-bg),var(--shadow2)}
+.stat.active-blue{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg),var(--shadow2)}
+.stat.active-red{border-color:var(--red);box-shadow:0 0 0 2px var(--red-bg),var(--shadow2)}
 .stat-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
 .stat-val{font-family:'Lora',serif;font-size:28px;line-height:1;letter-spacing:-.01em}
 .stat-val.fire{color:var(--fire)}.stat-val.gold{color:var(--gold)}.stat-val.blue{color:var(--blue)}.stat-val.star{color:var(--star)}.stat-val.purple{color:var(--purple)}
 .stat-hint{font-size:11px;color:var(--muted2);margin-top:3px}
+.active-tab-label{font-size:11px;font-weight:700;color:var(--fire);margin-top:5px;display:none}
+.stat.active .active-tab-label{display:block}
 /* Filters */
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
 .search{background:var(--bg2);border:1.5px solid var(--border);padding:9px 14px;border-radius:8px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;width:240px;box-shadow:var(--shadow)}
@@ -183,8 +192,6 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
   </div>
 </div>
 
-<div class="nav">
-  <div class="tab fav-tab" id="t-fav" onclick="sw('fav')">Favorites ⭐ <span class="cnt" id="c-fav">0</span></div>
   <div class="tab rev-tab" id="t-rev" onclick="sw('rev')">For Review 👀 <span class="cnt" id="c-rev">0</span></div>
   <div class="tab" id="t-new" onclick="sw('new')">New Today <span class="cnt" id="c-new">0</span></div>
   <div class="tab" id="t-hot" onclick="sw('hot')">Just Listed <span class="cnt" id="c-hot">0</span></div>
@@ -242,14 +249,15 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
     </div>
   </div>
 
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Favorites</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div></div>
-    <div class="stat"><div class="stat-label">For Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Review for Tour</div></div>
-    <div class="stat"><div class="stat-label">Top Picks 🔥</div><div class="stat-val fire" id="s-top">—</div><div class="stat-hint">Score ≥ 65 · 🏆 Elite ≥ 68</div></div>
-    <div class="stat"><div class="stat-label">Just Listed</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤7 days + meets criteria</div></div>
-    <div class="stat"><div class="stat-label">So Close</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Meets some criteria</div></div>
-    <div class="stat"><div class="stat-label">New Today</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
-    <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">All listings</div></div>
+  <div class="stats" id="stat-cards">
+    <div class="stat active-star" id="sc-fav" onclick="swCard('fav')"><div class="stat-label">Favorites ⭐</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div><div class="active-tab-label">● Viewing</div></div>
+    <div class="stat" id="sc-rev" onclick="swCard('rev')"><div class="stat-label">For Review 👀</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Review for Tour</div><div class="active-tab-label" style="color:var(--purple)">● Viewing</div></div>
+    <div class="stat" id="sc-new" onclick="swCard('new')"><div class="stat-label">New Today</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div><div class="active-tab-label" style="color:var(--blue)">● Viewing</div></div>
+    <div class="stat" id="sc-hot" onclick="swCard('hot')"><div class="stat-label">Just Listed</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤7 days + meets criteria</div><div class="active-tab-label">● Viewing</div></div>
+    <div class="stat" id="sc-top" onclick="swCard('top')"><div class="stat-label">Top Picks 🔥</div><div class="stat-val fire" id="s-top">—</div><div class="stat-hint">Score ≥ 65</div><div class="active-tab-label">● Viewing</div></div>
+    <div class="stat" id="sc-str" onclick="swCard('str')"><div class="stat-label">So Close</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Meets some criteria</div><div class="active-tab-label" style="color:var(--gold)">● Viewing</div></div>
+    <div class="stat active" id="sc-all" onclick="swCard('all')"><div class="stat-label">All Active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">All listings</div><div class="active-tab-label" style="color:var(--text)">● Viewing</div></div>
+    <div class="stat" id="sc-rej" onclick="swCard('rej')"><div class="stat-label">Rejected 🚫</div><div class="stat-val" id="s-rej" style="color:var(--red)">—</div><div class="stat-hint">Disliked listings</div><div class="active-tab-label" style="color:var(--red)">● Viewing</div></div>
   </div>
 
   <div class="filters">
@@ -281,7 +289,7 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 
 <script>
 // ── State ─────────────────────────────────────────────────────
-let all=[], tab='top', neigh='all', commuteFilter=false, currentPanelId=null, lastRunDate=null;
+let all=[], tab='all', neigh='all', commuteFilter=false, currentPanelId=null, lastRunDate=null;
 
 // Favorites + Review stored in localStorage — persist across sessions
 let favorites = new Set(JSON.parse(localStorage.getItem('apt_favorites')||'[]'));
@@ -373,6 +381,7 @@ function updateStats(){
   set('s-new',   newR.length);
   set('s-total', active.length);
   set('c-rej',   rejectedLocal.length);
+  set('s-rej',   rejectedLocal.length);
 
   set('c-str',  soClose.length);
   set('c-fav',  favs.length);
@@ -385,12 +394,26 @@ function updateStats(){
 }
 
 // ── Tabs ──────────────────────────────────────────────────────
-function sw(t){
+function swCard(t){
+  // Toggle off if already active (return to all)
+  if(tab===t && t!=='all'){ t='all'; }
   tab=t;
-  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('on'));
-  document.getElementById('t-'+t).classList.add('on');
+  // Clear all active states
+  document.querySelectorAll('.stat').forEach(el=>{
+    el.classList.remove('active','active-star','active-purple','active-gold','active-blue','active-red');
+  });
+  // Apply active state to selected card
+  const colorMap={
+    fav:'active-star', rev:'active-purple', new:'active-blue',
+    hot:'active', top:'active', str:'active-gold',
+    all:'active', rej:'active-red'
+  };
+  const el=document.getElementById('sc-'+t);
+  if(el) el.classList.add(colorMap[t]||'active');
   render();
 }
+// Keep sw() as alias for backward compat
+function sw(t){ swCard(t); }
 
 // ── Filters ───────────────────────────────────────────────────
 function setNeigh(n){
