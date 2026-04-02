@@ -18,7 +18,8 @@
   --green:#1e7a45;--green-bg:#eaf5ee;
   --red:#c0392b;--red-bg:#fdf0ee;
   --amber:#9a6b0a;--amber-bg:#fdf6e3;
-  --star:#d4a843;
+  --star:#c9920a;--star-bg:#fdf6e3;
+  --purple:#6b3fa0;--purple-bg:#f3eeff;
   --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
   --shadow2:0 4px 12px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
 }
@@ -31,21 +32,26 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .ts{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
 .btn{background:var(--bg3);border:1px solid var(--border2);color:var(--muted);padding:7px 16px;border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s}
 .btn:hover{background:var(--fire-bg);border-color:var(--fire);color:var(--fire)}
+/* Nav */
 .nav{background:var(--bg2);border-bottom:2px solid var(--border);display:flex;padding:0 24px;overflow-x:auto}
 .tab{padding:14px 18px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;user-select:none}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--fire);border-bottom-color:var(--fire)}
-.tab-fav.on{color:var(--star);border-bottom-color:var(--star)}
+.tab.fav-tab.on{color:var(--star);border-bottom-color:var(--star)}
+.tab.rev-tab.on{color:var(--purple);border-bottom-color:var(--purple)}
 .cnt{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);padding:2px 7px;border-radius:20px;margin-left:6px;color:var(--muted2);font-weight:400}
 .tab.on .cnt{background:var(--fire-bg);color:var(--fire)}
-.tab-fav.on .cnt{background:#fdf6e3;color:var(--star)}
+.tab.fav-tab.on .cnt{background:var(--star-bg);color:var(--star)}
+.tab.rev-tab.on .cnt{background:var(--purple-bg);color:var(--purple)}
+/* Page */
 .page{padding:24px;max-width:1300px}
-.stats{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
-.stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;flex:1;min-width:130px;box-shadow:var(--shadow)}
-.stat-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.stat-val{font-family:'Lora',serif;font-size:30px;line-height:1;letter-spacing:-.01em}
-.stat-val.fire{color:var(--fire)}.stat-val.gold{color:var(--gold)}.stat-val.blue{color:var(--blue)}.stat-val.ice{color:var(--ice)}.stat-val.star{color:var(--star)}
-.stat-hint{font-size:12px;color:var(--muted2);margin-top:4px}
+.stats{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;flex:1;min-width:110px;box-shadow:var(--shadow)}
+.stat-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.stat-val{font-family:'Lora',serif;font-size:28px;line-height:1;letter-spacing:-.01em}
+.stat-val.fire{color:var(--fire)}.stat-val.gold{color:var(--gold)}.stat-val.blue{color:var(--blue)}.stat-val.star{color:var(--star)}.stat-val.purple{color:var(--purple)}
+.stat-hint{font-size:11px;color:var(--muted2);margin-top:3px}
+/* Filters */
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
 .search{background:var(--bg2);border:1.5px solid var(--border);padding:9px 14px;border-radius:8px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;width:240px;box-shadow:var(--shadow)}
 .search::placeholder{color:var(--muted2)}
@@ -53,27 +59,27 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .chip{background:var(--bg2);border:1.5px solid var(--border);padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s;user-select:none;box-shadow:var(--shadow)}
 .chip:hover{border-color:var(--border2);color:var(--text)}
 .chip.on{border-color:var(--fire);color:var(--fire);background:var(--fire-bg)}
+/* Section */
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:4px}
 .sec-title{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--text)}
 .sec-count{font-size:13px;color:var(--muted)}
 .divider{border:none;border-top:1px solid var(--border);margin:24px 0}
 .stack{display:flex;flex-direction:column;gap:12px}
 /* Card */
-.card{background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:20px 22px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;box-shadow:var(--shadow);position:relative}
+.card{background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start;box-shadow:var(--shadow)}
 .card:hover{border-color:var(--border2);box-shadow:var(--shadow2);transform:translateY(-1px)}
 .card.must{border-left:4px solid var(--fire)}
 .card.strong{border-left:4px solid var(--gold)}
 .card.backup{border-left:4px solid var(--blue)}
 .card.skip{border-left:4px solid var(--muted2);opacity:.55}
-.card.favorited{border-top:2px solid var(--star)}
-/* Star button */
-.star-btn{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;font-size:20px;line-height:1;padding:4px;opacity:.4;transition:all .15s;z-index:10}
-.star-btn:hover{opacity:1;transform:scale(1.2)}
-.star-btn.starred{opacity:1;color:var(--star)}
-.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding-right:32px}
+.card.favorited{outline:2px solid var(--star);outline-offset:-1px}
+.card.in-review{outline:2px solid var(--purple);outline-offset:-1px}
+/* Card top row */
+.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .addr{font-size:16px;font-weight:600;letter-spacing:-.01em;color:var(--text)}
 .unit-lbl{color:var(--muted);font-size:14px;font-weight:400}
 .neigh-pill{background:var(--blue-bg);color:var(--blue);border:1px solid #c0d8f0;font-size:13px;font-weight:600;padding:3px 10px;border-radius:20px}
+/* Badges */
 .badge{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:5px;font-weight:500;white-space:nowrap}
 .b-fire{background:var(--fire-bg);color:var(--fire);border:1px solid #f0c4b4}
 .b-gold{background:var(--gold-bg);color:var(--gold);border:1px solid #e8d4a0}
@@ -83,23 +89,34 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .b-ice{background:var(--ice-bg);color:var(--ice);border:1px solid #b0d8e0}
 .b-green{background:var(--green-bg);color:var(--green);border:1px solid #a8d8b8}
 .b-red{background:var(--red-bg);color:var(--red);border:1px solid #f0c0b8}
-.b-amber{background:var(--amber-bg);color:var(--amber);border:1px solid #e0c880}
-.meta{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-bottom:12px;align-items:center}
+.b-purple{background:var(--purple-bg);color:var(--purple);border:1px solid #d0b8f0}
+/* Meta row */
+.meta{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-bottom:10px;align-items:center}
 .meta .v{color:var(--text);font-weight:600}
-.meta .commute-ok{color:var(--green);font-weight:600}
-.meta .commute-warn{color:var(--amber);font-weight:600}
-.meta .commute-bad{color:var(--red);font-weight:600}
+.commute-ok{color:var(--green);font-weight:600}
+.commute-warn{color:var(--amber);font-weight:600}
+.commute-bad{color:var(--red);font-weight:600}
 .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.card-r{display:flex;flex-direction:column;align-items:flex-end;gap:10px;min-width:130px}
-.price{font-family:'Lora',serif;font-size:22px;font-weight:600;letter-spacing:-.01em;color:var(--text)}
-.score-wrap{text-align:center;background:var(--bg3);border-radius:10px;padding:8px 14px;min-width:70px}
-.score-num{font-family:'Lora',serif;font-size:24px;line-height:1;font-weight:600}
+/* Card right column */
+.card-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:140px}
+/* Price + action row */
+.price-row{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.price{font-family:'Lora',serif;font-size:21px;font-weight:600;letter-spacing:-.01em;color:var(--text)}
+/* Inline action buttons */
+.icon-btn{background:none;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;font-size:15px;line-height:1;padding:5px 7px;transition:all .15s;color:var(--muted2)}
+.icon-btn:hover{border-color:var(--border2);color:var(--text);transform:scale(1.1)}
+.icon-btn.starred{border-color:var(--star);background:var(--star-bg);color:var(--star)}
+.icon-btn.reviewed{border-color:var(--purple);background:var(--purple-bg);color:var(--purple)}
+/* Score */
+.score-wrap{text-align:center;background:var(--bg3);border-radius:10px;padding:7px 12px;min-width:64px}
+.score-num{font-family:'Lora',serif;font-size:22px;line-height:1;font-weight:600}
 .score-lbl{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px}
-.bar-wrap{width:60px;height:4px;background:var(--bg4);border-radius:2px;margin-top:4px}
-.bar{height:4px;border-radius:2px}
+.bar-wrap{width:54px;height:3px;background:var(--bg4);border-radius:2px;margin-top:3px}
+.bar{height:3px;border-radius:2px}
 .day-lbl{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted2)}
-.sel{background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;padding:5px 8px;border-radius:7px;cursor:pointer;outline:none;width:100%}
+.sel{background:var(--bg3);border:1.5px solid var(--border);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;padding:4px 7px;border-radius:7px;cursor:pointer;outline:none;width:100%}
 .sel:focus{border-color:var(--blue)}
+/* Empty */
 .empty{text-align:center;padding:56px 24px;color:var(--muted);background:var(--bg2);border-radius:14px;border:1px dashed var(--border)}
 .empty-i{font-size:32px;margin-bottom:12px;opacity:.4}
 .empty-t{font-size:15px}
@@ -108,11 +125,13 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .overlay.open{display:block}
 .panel{position:fixed;right:0;top:0;bottom:0;width:500px;background:var(--bg2);border-left:1px solid var(--border);z-index:201;overflow-y:auto;padding:28px;display:none;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
 .panel.open{display:block}
-.panel-close{background:var(--bg3);border:1.5px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;margin-bottom:22px;transition:all .15s}
+.panel-actions{display:flex;align-items:center;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+.panel-close{background:var(--bg3);border:1.5px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s}
 .panel-close:hover{background:var(--bg4);color:var(--text)}
-.panel-star{float:right;background:none;border:1.5px solid var(--border);border-radius:8px;padding:8px 14px;font-size:18px;cursor:pointer;transition:all .15s;margin-bottom:22px;margin-left:8px}
-.panel-star:hover{border-color:var(--star)}
-.panel-star.starred{border-color:var(--star);background:#fdf6e3}
+.panel-action-btn{border:1.5px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;background:var(--bg3);color:var(--muted);transition:all .15s;display:flex;align-items:center;gap:6px}
+.panel-action-btn:hover{border-color:var(--border2);color:var(--text)}
+.panel-action-btn.starred{border-color:var(--star);background:var(--star-bg);color:var(--star)}
+.panel-action-btn.reviewed{border-color:var(--purple);background:var(--purple-bg);color:var(--purple)}
 .panel-addr{font-family:'Lora',serif;font-size:24px;font-weight:600;letter-spacing:-.02em;margin-bottom:4px;line-height:1.2}
 .panel-neigh{font-size:14px;color:var(--muted);margin-bottom:10px}
 .panel-price{font-family:'Lora',serif;font-size:32px;font-weight:600;color:var(--fire);margin-bottom:20px;line-height:1}
@@ -135,8 +154,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 <body>
 <script>
 const SUPABASE_URL='https://lexlvpwtffkarcahszrk.supabase.co';
-const SUPABASE_ANON_KEY='sbpublishable_9knEQŁOȘWF4PW6GL2Mye8Q_CXTYKDNC';
+const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 </script>
+
 <div class="header">
   <div class="logo">Apt Hunter <span class="logo-sub">Brooklyn + Hoboken · Jun 1 · 2BD+</span></div>
   <div class="hdr-right">
@@ -144,66 +164,72 @@ const SUPABASE_ANON_KEY='sbpublishable_9knEQŁOȘWF4PW6GL2Mye8Q_CXTYKDNC';
     <button class="btn" id="refresh-btn" onclick="load()">↻ Refresh</button>
   </div>
 </div>
+
 <div class="nav">
-  <div class="tab tab-fav" id="t-fav" onclick="sw('fav')">⭐ Favorites <span class="cnt" id="c-fav">0</span></div>
+  <div class="tab fav-tab" id="t-fav" onclick="sw('fav')">⭐ Favorites <span class="cnt" id="c-fav">0</span></div>
+  <div class="tab rev-tab" id="t-rev" onclick="sw('rev')">👀 Review <span class="cnt" id="c-rev">0</span></div>
   <div class="tab on" id="t-top" onclick="sw('top')">Top picks <span class="cnt" id="c-top">0</span></div>
   <div class="tab" id="t-new" onclick="sw('new')">New today <span class="cnt" id="c-new">0</span></div>
   <div class="tab" id="t-hot" onclick="sw('hot')">🔥 Hot <span class="cnt" id="c-hot">0</span></div>
   <div class="tab" id="t-all" onclick="sw('all')">All active <span class="cnt" id="c-all">0</span></div>
 </div>
+
 <div class="page">
   <div class="stats">
     <div class="stat"><div class="stat-label">Favorites</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div></div>
+    <div class="stat"><div class="stat-label">In Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Sent for review</div></div>
     <div class="stat"><div class="stat-label">Must Tour</div><div class="stat-val fire" id="s-must">—</div><div class="stat-hint">Act now</div></div>
     <div class="stat"><div class="stat-label">Strong</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Worth a look</div></div>
     <div class="stat"><div class="stat-label">New (last run)</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
-    <div class="stat"><div class="stat-label">🔥 Hot</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤ 7 days, meets criteria</div></div>
-    <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">Pass filter</div></div>
+    <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">All listings</div></div>
   </div>
+
   <div class="filters">
     <input class="search" type="text" placeholder="Search address or neighborhood…" id="q" oninput="render()"/>
     <div class="chip on" id="fn-all" onclick="setNeigh('all')">All areas</div>
-    <div class="chip" id="fn-bh" onclick="setNeigh('brooklyn heights')">Brooklyn Hts</div>
-    <div class="chip" id="fn-wb" onclick="setNeigh('williamsburg')">Williamsburg</div>
-    <div class="chip" id="fn-cg" onclick="setNeigh('carroll gardens')">Carroll Gdns</div>
-    <div class="chip" id="fn-ps" onclick="setNeigh('park slope')">Park Slope</div>
-    <div class="chip" id="fn-gp" onclick="setNeigh('greenpoint')">Greenpoint</div>
+    <div class="chip" id="fn-bh"  onclick="setNeigh('brooklyn heights')">Brooklyn Hts</div>
+    <div class="chip" id="fn-wb"  onclick="setNeigh('williamsburg')">Williamsburg</div>
+    <div class="chip" id="fn-cg"  onclick="setNeigh('carroll gardens')">Carroll Gdns</div>
+    <div class="chip" id="fn-ps"  onclick="setNeigh('park slope')">Park Slope</div>
+    <div class="chip" id="fn-gp"  onclick="setNeigh('greenpoint')">Greenpoint</div>
     <div class="chip" id="fn-hob" onclick="setNeigh('hoboken')">Hoboken</div>
-    <div class="chip" id="fc" onclick="toggleCommute()">≤ 45 min commute</div>
+    <div class="chip" id="fc"     onclick="toggleCommute()">≤ 45 min commute</div>
   </div>
+
   <div id="main"></div>
 </div>
+
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
-  <div style="display:flex;align-items:center;margin-bottom:22px">
-    <button class="panel-close" onclick="closePanel()" style="margin-bottom:0">← Back to listings</button>
-    <button class="panel-star" id="panel-star-btn" onclick="toggleFavPanel()">☆</button>
+  <div class="panel-actions">
+    <button class="panel-close" onclick="closePanel()">← Back</button>
+    <button class="panel-action-btn" id="panel-fav-btn" onclick="toggleFavPanel()">☆ Favorite</button>
+    <button class="panel-action-btn" id="panel-rev-btn" onclick="toggleRevPanel()">👀 Send for Review</button>
   </div>
   <div id="panel-body"></div>
 </div>
+
 <script>
-// ── Config ────────────────────────────────────────────────────
-let all=[], tab='top', neigh='all', commuteFilter=false;
-// Favorites stored in localStorage so they persist across sessions
+// ── State ─────────────────────────────────────────────────────
+let all=[], tab='top', neigh='all', commuteFilter=false, currentPanelId=null, lastRunDate=null;
+
+// Favorites + Review stored in localStorage — persist across sessions
 let favorites = new Set(JSON.parse(localStorage.getItem('apt_favorites')||'[]'));
-let lastRunDate = localStorage.getItem('apt_last_run') || null;
-let currentPanelId = null;
+let reviewed   = new Set(JSON.parse(localStorage.getItem('apt_reviewed')||'[]'));
+
+function saveFavorites(){ localStorage.setItem('apt_favorites', JSON.stringify([...favorites])); }
+function saveReviewed(){  localStorage.setItem('apt_reviewed',  JSON.stringify([...reviewed]));  }
 
 const today = new Date(); today.setHours(0,0,0,0);
-
-function saveFavorites(){
-  localStorage.setItem('apt_favorites', JSON.stringify([...favorites]));
-}
 
 // ── Supabase ──────────────────────────────────────────────────
 async function sbGet(table, select, filter){
   const url=`${SUPABASE_URL}/rest/v1/${table}?select=${encodeURIComponent(select)}${filter?'&'+filter:''}`;
   const r=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
-  if(!r.ok) throw new Error(`Supabase ${r.status}`);
+  if(!r.ok) throw new Error(`Supabase ${r.status}: ${await r.text()}`);
   return r.json();
 }
 async function sbPatch(table,id,fields){
-  if(SUPABASE_ANON_KEY==='REPLACE_SUPABASE_KEY') return;
   await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{
     method:'PATCH',
     headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},
@@ -217,44 +243,45 @@ async function load(){
   btn.textContent='↻ Loading…';
   document.getElementById('ts').textContent='Refreshing…';
   try{
-    const fields='id,address_normalized,unit,neighborhood,price,price_min_seen,price_max_seen,bedrooms,bathrooms,sqft,floor,is_ground_floor,in_unit_laundry,dishwasher,parking,storage,gym,natural_light_confidence,commute_minutes,commute_ok,primary_url,source_urls,sources,building_name,score_raw,score_tier,heat,status,notes,first_seen,last_seen';
-    all=await sbGet('listings',fields,'status=neq.rejected&order=score_raw.desc');
-
-    // Detect last run date from most recent first_seen
-    const dates = all.map(l=>l.first_seen).filter(Boolean).sort().reverse();
-    if(dates.length) lastRunDate = dates[0];
-
+    const fields='id,address_normalized,unit,neighborhood,price,price_min_seen,price_max_seen,'+
+      'bedrooms,bathrooms,sqft,floor,is_ground_floor,in_unit_laundry,dishwasher,parking,storage,gym,'+
+      'natural_light_confidence,commute_minutes,commute_ok,primary_url,source_urls,sources,'+
+      'building_name,score_raw,score_tier,heat,status,notes,first_seen,last_seen';
+    // Load ALL non-rejected listings — no score_tier filter
+    all = await sbGet('listings', fields, 'status=neq.rejected&order=score_raw.desc&limit=500');
+    // Detect last run date
+    const dates=all.map(l=>l.first_seen).filter(Boolean).sort().reverse();
+    if(dates.length) lastRunDate=dates[0];
+    document.getElementById('ts').textContent=new Date().toLocaleTimeString();
   }catch(e){
-    console.error(e);
-    if(!all.length) all=DEMO;
-    document.getElementById('ts').textContent='Demo mode';
+    console.error('Load error:',e);
+    document.getElementById('ts').textContent='Error loading — '+e.message;
   }
   updateStats(); render();
-  document.getElementById('ts').textContent=new Date().toLocaleTimeString();
   btn.textContent='↻ Refresh';
 }
 
 // ── Stats ─────────────────────────────────────────────────────
 function updateStats(){
-  const active=all.filter(l=>l.status!=='rejected'&&l.score_tier!=='❌ Skip');
-  const must=active.filter(l=>l.score_tier==='🔥 Must Tour');
-  const strong=active.filter(l=>l.score_tier==='👍 Strong');
-  // Hot = ≤7 days AND score ≥ 55 (actually meets criteria)
-  const hot=active.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=55);
-  // New since last run
-  const newSinceRun=lastRunDate ? active.filter(l=>l.first_seen===lastRunDate) : active.filter(l=>daysAgo(l.first_seen)<=1);
-  const favs=[...favorites].filter(id=>all.find(l=>l.id===id));
+  const active = all.filter(l=>l.status!=='rejected');
+  const must   = active.filter(l=>l.score_tier==='🔥 Must Tour');
+  const strong = active.filter(l=>l.score_tier==='👍 Strong');
+  const hot    = active.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=55);
+  const newR   = lastRunDate ? active.filter(l=>l.first_seen===lastRunDate) : active.filter(l=>daysAgo(l.first_seen)<=1);
+  const favs   = active.filter(l=>favorites.has(l.id));
+  const revs   = active.filter(l=>reviewed.has(l.id));
 
   set('s-fav',   favs.length);
+  set('s-rev',   revs.length);
   set('s-must',  must.length);
   set('s-strong',strong.length);
-  set('s-new',   newSinceRun.length);
-  set('s-hot',   hot.length);
+  set('s-new',   newR.length);
   set('s-total', active.length);
 
   set('c-fav',  favs.length);
+  set('c-rev',  revs.length);
   set('c-top',  must.length+strong.length);
-  set('c-new',  newSinceRun.length);
+  set('c-new',  newR.length);
   set('c-hot',  hot.length);
   set('c-all',  active.length);
 }
@@ -280,10 +307,10 @@ function toggleCommute(){
   document.getElementById('fc').classList.toggle('on',commuteFilter);
   render();
 }
-
 function filtered(){
   const q=document.getElementById('q').value.toLowerCase();
-  let list=all.filter(l=>l.status!=='rejected'&&l.score_tier!=='❌ Skip');
+  // All active (not rejected) — no score tier filter for All Active
+  let list=all.filter(l=>l.status!=='rejected');
   if(q) list=list.filter(l=>(l.address_normalized||'').toLowerCase().includes(q)||(l.neighborhood||'').toLowerCase().includes(q));
   if(neigh!=='all') list=list.filter(l=>(l.neighborhood||'').toLowerCase()===neigh);
   if(commuteFilter) list=list.filter(l=>(l.commute_minutes||99)<=45);
@@ -296,121 +323,147 @@ function render(){
   const rows=filtered();
 
   if(tab==='fav'){
-    const favRows=all.filter(l=>favorites.has(l.id));
-    main.innerHTML=section('⭐ Your Favorites',favRows);
+    const favRows=all.filter(l=>favorites.has(l.id)&&l.status!=='rejected');
+    main.innerHTML=section('⭐ Favorites',favRows,'No favorites yet — star a listing to add it here');
+    return;
+  }
+  if(tab==='rev'){
+    const revRows=all.filter(l=>reviewed.has(l.id)&&l.status!=='rejected');
+    main.innerHTML=section('👀 Sent for Review',revRows,'No listings sent for review yet — click 👀 on any listing');
     return;
   }
   if(tab==='top'){
-    let html=section('🔥 Must Tour',rows.filter(l=>l.score_tier==='🔥 Must Tour'));
+    const must=rows.filter(l=>l.score_tier==='🔥 Must Tour');
+    const strong=rows.filter(l=>l.score_tier==='👍 Strong');
+    let html=section('🔥 Must Tour',must);
     html+='<hr class="divider"/>';
-    html+=section('👍 Strong picks',rows.filter(l=>l.score_tier==='👍 Strong'));
-    main.innerHTML=html;
-    return;
+    html+=section('👍 Strong picks',strong);
+    main.innerHTML=html; return;
   }
   if(tab==='new'){
-    // New since last scrape run
-    const newRows = lastRunDate
-      ? rows.filter(l=>l.first_seen===lastRunDate)
-      : rows.filter(l=>daysAgo(l.first_seen)<=1);
-    main.innerHTML=section('New since last scrape',newRows);
-    return;
+    const newRows=lastRunDate ? rows.filter(l=>l.first_seen===lastRunDate) : rows.filter(l=>daysAgo(l.first_seen)<=1);
+    main.innerHTML=section('New since last scrape',newRows); return;
   }
   if(tab==='hot'){
-    // Hot = fresh (≤7 days) AND meaningfully meets criteria (score ≥ 55)
     const hotRows=rows.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=55);
     const warmRows=rows.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)<55);
     let html=section('🔥 Hot — fresh & meets criteria',hotRows);
-    if(warmRows.length){
-      html+='<hr class="divider"/>';
-      html+=section('⏳ Fresh but check details',warmRows);
-    }
-    main.innerHTML=html;
-    return;
+    if(warmRows.length){ html+='<hr class="divider"/>'+section('⏳ Fresh but check details',warmRows); }
+    main.innerHTML=html; return;
   }
+  // All active — no tier filter
   main.innerHTML=section('All active listings',rows);
 }
 
-function section(title,rows){
-  return`<div class="sec-hdr"><span class="sec-title">${title}</span><span class="sec-count">${rows.length} listing${rows.length!==1?'s':''}</span></div><div class="stack">${rows.length?rows.map(card).join(''):'<div class="empty"><div class="empty-i">○</div><div class="empty-t">No listings here yet</div></div>'}</div>`;
+function section(title, rows, emptyMsg){
+  const empty=emptyMsg||'No listings here yet';
+  return`<div class="sec-hdr"><span class="sec-title">${title}</span><span class="sec-count">${rows.length} listing${rows.length!==1?'s':''}</span></div>`+
+    `<div class="stack">${rows.length?rows.map(card).join(''):`<div class="empty"><div class="empty-i">○</div><div class="empty-t">${empty}</div></div>`}</div>`;
 }
 
 // ── Card ──────────────────────────────────────────────────────
 function card(l){
   const isFav=favorites.has(l.id);
+  const isRev=reviewed.has(l.id);
   const tierCls={'🔥 Must Tour':'must','👍 Strong':'strong','🤔 Backup':'backup','❌ Skip':'skip'}[l.score_tier]||'backup';
   const tierBadge={'🔥 Must Tour':'<span class="badge b-fire">Must Tour</span>','👍 Strong':'<span class="badge b-gold">Strong</span>','🤔 Backup':'<span class="badge b-blue">Backup</span>'}[l.score_tier]||'';
   const heatBadge=l.heat==='🔥 Hot'?'<span class="badge b-hot">🔥 Hot</span>':l.heat==='🧊 Stale'?'<span class="badge b-ice">Stale</span>':'';
+  const revBadge=isRev?'<span class="badge b-purple">👀 Review</span>':'';
   const n=l.neighborhood||'';
-  const neighPill=n?`<span class="neigh-pill">${n.split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' ')}</span>`:'';
+  const neighPill=n?`<span class="neigh-pill">${capNeigh(n)}</span>`:'';
   const cm=l.commute_minutes;
-  const cmClass=!cm?'':cm<=35?'commute-ok':cm<=45?'commute-warn':'commute-bad';
+  const cmCls=!cm?'':cm<=35?'commute-ok':cm<=45?'commute-warn':'commute-bad';
   const ams=[l.in_unit_laundry&&'Laundry',l.dishwasher&&'Dishwasher',l.parking&&'Parking',l.storage&&'Storage',l.gym&&'Gym'].filter(Boolean);
-  const lightBadge=l.natural_light_confidence==='High'?'<span class="badge b-green">☀ Good light</span>':l.natural_light_confidence==='Low'?'<span class="badge b-red">Low light</span>':'';
   const sc=l.score_raw||0;
   const scColor=sc>=75?'var(--fire)':sc>=55?'var(--gold)':sc>=35?'var(--blue)':'var(--muted)';
+  let outline='';
+  if(isFav&&isRev) outline=' favorited in-review';
+  else if(isFav) outline=' favorited';
+  else if(isRev) outline=' in-review';
 
-  return`<div class="card ${tierCls}${isFav?' favorited':''}" onclick="openPanel('${l.id}')">
-    <button class="star-btn${isFav?' starred':''}" onclick="event.stopPropagation();toggleFav('${l.id}')" title="${isFav?'Remove from favorites':'Add to favorites'}">${isFav?'⭐':'☆'}</button>
+  return`<div class="card ${tierCls}${outline}" onclick="openPanel('${l.id}')">
     <div>
-      <div class="card-top"><span class="addr">${l.address_normalized||'—'}</span><span class="unit-lbl">${l.unit?'#'+l.unit:''}</span>${neighPill}${tierBadge}${heatBadge}</div>
+      <div class="card-top">
+        <span class="addr">${l.address_normalized||'—'}</span>
+        <span class="unit-lbl">${l.unit?'#'+l.unit:''}</span>
+        ${neighPill}${tierBadge}${heatBadge}${revBadge}
+      </div>
       <div class="meta">
         <span><span class="v">${l.bedrooms||'?'} bd</span> / <span class="v">${l.bathrooms||'?'} ba</span></span>
         ${l.sqft?`<span><span class="v">${l.sqft.toLocaleString()}</span> sqft</span>`:''}
         ${l.floor?`<span>Floor <span class="v">${l.floor}</span></span>`:''}
-        ${cm?`<span><span class="${cmClass}">${cm} min</span> to Midtown</span>`:''}
+        ${cm?`<span><span class="${cmCls}">${cm} min</span> to Midtown</span>`:''}
       </div>
-      <div class="tags">${ams.map(a=>`<span class="badge b-muted">${a}</span>`).join('')}${lightBadge}</div>
+      <div class="tags">${ams.map(a=>`<span class="badge b-muted">${a}</span>`).join('')}
+        ${l.natural_light_confidence==='High'?'<span class="badge b-green">☀ Good light</span>':''}
+        ${l.natural_light_confidence==='Low'?'<span class="badge b-red">Low light</span>':''}
+      </div>
     </div>
     <div class="card-r">
-      <div class="price">$${(l.price||0).toLocaleString()}<span style="font-size:13px;color:var(--muted);font-weight:400">/mo</span></div>
-      <div class="score-wrap"><div class="score-num" style="color:${scColor}">${sc}</div><div class="score-lbl">score</div><div class="bar-wrap"><div class="bar" style="width:${sc}%;background:${scColor}"></div></div></div>
+      <div class="price-row">
+        <button class="icon-btn${isFav?' starred':''}" onclick="event.stopPropagation();toggleFav('${l.id}')" title="${isFav?'Remove favorite':'Add to favorites'}">⭐</button>
+        <button class="icon-btn${isRev?' reviewed':''}" onclick="event.stopPropagation();toggleRev('${l.id}')" title="${isRev?'Remove from review':'Send for review'}">👀</button>
+        <div class="price">$${(l.price||0).toLocaleString()}<span style="font-size:12px;color:var(--muted);font-weight:400">/mo</span></div>
+      </div>
+      <div class="score-wrap">
+        <div class="score-num" style="color:${scColor}">${sc}</div>
+        <div class="score-lbl">score</div>
+        <div class="bar-wrap"><div class="bar" style="width:${sc}%;background:${scColor}"></div></div>
+      </div>
       <div class="day-lbl">${fmtDays(l.first_seen)}</div>
-      <select class="sel" onclick="event.stopPropagation()" onchange="setStatus('${l.id}',this.value)">${['new','reviewing','saved','touring','contacted','rejected'].map(s=>`<option${l.status===s?' selected':''}>${s}</option>`).join('')}</select>
+      <select class="sel" onclick="event.stopPropagation()" onchange="setStatus('${l.id}',this.value)">
+        ${['new','reviewing','saved','touring','contacted','rejected'].map(s=>`<option${l.status===s?' selected':''}>${s}</option>`).join('')}
+      </select>
     </div>
   </div>`;
 }
 
-// ── Favorites ─────────────────────────────────────────────────
+// ── Favorites & Review ────────────────────────────────────────
 function toggleFav(id){
-  if(favorites.has(id)) favorites.delete(id);
-  else favorites.add(id);
-  saveFavorites();
-  updateStats();
-  render();
-  // Update panel star if open
-  if(currentPanelId===id){
-    const btn=document.getElementById('panel-star-btn');
-    if(btn){btn.textContent=favorites.has(id)?'⭐':'☆';btn.classList.toggle('starred',favorites.has(id));}
-  }
+  if(favorites.has(id)) favorites.delete(id); else favorites.add(id);
+  saveFavorites(); updateStats(); render();
+  updatePanelButtons(id);
 }
-function toggleFavPanel(){
-  if(currentPanelId) toggleFav(currentPanelId);
+function toggleRev(id){
+  if(reviewed.has(id)) reviewed.delete(id); else reviewed.add(id);
+  saveReviewed(); updateStats(); render();
+  updatePanelButtons(id);
+}
+function toggleFavPanel(){ if(currentPanelId) toggleFav(currentPanelId); }
+function toggleRevPanel(){  if(currentPanelId) toggleRev(currentPanelId); }
+
+function updatePanelButtons(id){
+  if(currentPanelId!==id) return;
+  const fb=document.getElementById('panel-fav-btn');
+  const rb=document.getElementById('panel-rev-btn');
+  if(fb){ const f=favorites.has(id); fb.textContent=f?'⭐ Favorited':'☆ Favorite'; fb.classList.toggle('starred',f); }
+  if(rb){ const r=reviewed.has(id);  rb.textContent=r?'👀 In Review':'👀 Send for Review'; rb.classList.toggle('reviewed',r); }
 }
 
 // ── Detail panel ──────────────────────────────────────────────
 function openPanel(id){
-  const l=all.find(x=>x.id===id);if(!l)return;
+  const l=all.find(x=>x.id===id); if(!l) return;
   currentPanelId=id;
-  const isFav=favorites.has(id);
-  const starBtn=document.getElementById('panel-star-btn');
-  starBtn.textContent=isFav?'⭐':'☆';
-  starBtn.classList.toggle('starred',isFav);
+  updatePanelButtons(id);
 
   const ams=[['In-unit laundry',l.in_unit_laundry],['Dishwasher',l.dishwasher],['Parking',l.parking],['Storage',l.storage],['Gym',l.gym]];
   const sc=l.score_raw||0;
   const scColor=sc>=75?'var(--fire)':sc>=55?'var(--gold)':sc>=35?'var(--blue)':'var(--muted)';
   const cm=l.commute_minutes;
   const cmColor=!cm?'var(--muted)':cm<=35?'var(--green)':cm<=45?'var(--amber)':'var(--red)';
-  const n=l.neighborhood||'';
-  const nd=n.split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' ');
+  const nd=capNeigh(l.neighborhood||'');
   const primaryUrl=l.primary_url||'';
   const viewBtn=primaryUrl
     ?`<a class="view-btn" href="${primaryUrl}" target="_blank" rel="noopener noreferrer">↗ View listing</a>`
-    :`<span class="view-btn-muted">No listing URL available</span>`;
+    :`<span class="view-btn-muted">No listing URL</span>`;
   const tierBadge={'🔥 Must Tour':`<span class="badge b-fire" style="font-size:13px;padding:5px 12px">🔥 Must Tour</span>`,'👍 Strong':`<span class="badge b-gold" style="font-size:13px;padding:5px 12px">👍 Strong</span>`,'🤔 Backup':`<span class="badge b-blue" style="font-size:13px;padding:5px 12px">🤔 Backup</span>`}[l.score_tier]||'';
 
   document.getElementById('panel-body').innerHTML=`
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${tierBadge}${l.heat==='🔥 Hot'?'<span class="badge b-hot" style="font-size:13px;padding:5px 12px">🔥 Hot</span>':''}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      ${tierBadge}
+      ${l.heat==='🔥 Hot'?'<span class="badge b-hot" style="font-size:13px;padding:5px 12px">🔥 Hot</span>':''}
+      ${reviewed.has(id)?'<span class="badge b-purple" style="font-size:13px;padding:5px 12px">👀 In Review</span>':''}
+    </div>
     <div class="panel-addr">${l.address_normalized||'—'}${l.unit?' #'+l.unit:''}</div>
     <div class="panel-neigh">${nd}</div>
     <div class="panel-price">$${(l.price||0).toLocaleString()}<span style="font-size:16px;color:var(--muted);font-weight:400">/mo</span></div>
@@ -424,10 +477,18 @@ function openPanel(id){
       <div class="pfield"><div class="pfl">Score</div><div class="pfv" style="color:${scColor}">${sc} / 100</div></div>
       <div class="pfield"><div class="pfl">Days listed</div><div class="pfv">${Math.max(0,Math.floor((Date.now()-new Date(l.first_seen))/86400000))}</div></div>
     </div></div>
-    <div class="psec"><div class="psec-title">Amenities</div><div style="display:flex;gap:8px;flex-wrap:wrap">${ams.map(([n,v])=>`<span class="badge ${v?'b-green':'b-red'}" style="font-size:13px;padding:5px 10px">${v?'✓':'✗'} ${n}</span>`).join('')}</div></div>
+    <div class="psec"><div class="psec-title">Amenities</div><div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${ams.map(([n,v])=>`<span class="badge ${v?'b-green':'b-red'}" style="font-size:13px;padding:5px 10px">${v?'✓':'✗'} ${n}</span>`).join('')}
+    </div></div>
     <div class="psec"><div class="psec-title">View listing</div>${viewBtn}</div>
-    <div class="psec"><div class="psec-title">Status</div><select class="sel" style="width:100%;font-size:14px;padding:10px" onchange="setStatus('${l.id}',this.value)">${['new','reviewing','saved','touring','contacted','rejected'].map(s=>`<option${l.status===s?' selected':''}>${s}</option>`).join('')}</select></div>
-    <div class="psec"><div class="psec-title">Notes</div><textarea class="notes" placeholder="Add your notes here…" onchange="setNotes('${l.id}',this.value)">${l.notes||''}</textarea></div>`;
+    <div class="psec"><div class="psec-title">Status</div>
+      <select class="sel" style="width:100%;font-size:14px;padding:10px" onchange="setStatus('${l.id}',this.value)">
+        ${['new','reviewing','saved','touring','contacted','rejected'].map(s=>`<option${l.status===s?' selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div class="psec"><div class="psec-title">Notes</div>
+      <textarea class="notes" placeholder="Add your notes here…" onchange="setNotes('${l.id}',this.value)">${l.notes||''}</textarea>
+    </div>`;
 
   document.getElementById('overlay').classList.add('open');
   document.getElementById('panel').classList.add('open');
@@ -440,35 +501,35 @@ function closePanel(){
 
 // ── Write-back ────────────────────────────────────────────────
 async function setStatus(id,status){
-  const l=all.find(x=>x.id===id);if(l)l.status=status;
-  updateStats();render();
+  const l=all.find(x=>x.id===id); if(l) l.status=status;
+  updateStats(); render();
   await sbPatch('listings',id,{status}).catch(e=>console.warn(e));
 }
 async function setNotes(id,notes){
-  const l=all.find(x=>x.id===id);if(l)l.notes=notes;
+  const l=all.find(x=>x.id===id); if(l) l.notes=notes;
   await sbPatch('listings',id,{notes}).catch(e=>console.warn(e));
 }
 
 // ── Utils ─────────────────────────────────────────────────────
-function daysAgo(d){if(!d)return 999;const dt=new Date(d);dt.setHours(0,0,0,0);return Math.floor((today-dt)/86400000);}
-function fmtDays(d){const n=daysAgo(d);if(n===0)return'Today';if(n===1)return'1 day ago';return`${n} days ago`;}
-function set(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
-
-// ── Demo data ─────────────────────────────────────────────────
-const DEMO=[
-  {id:'d1',address_normalized:'45 Pineapple St',unit:'4A',neighborhood:'brooklyn heights',price:6800,bedrooms:2,bathrooms:2,sqft:1350,score_tier:'🔥 Must Tour',score_raw:87,heat:'🔥 Hot',status:'new',commute_minutes:30,in_unit_laundry:true,dishwasher:true,parking:false,storage:true,gym:true,natural_light_confidence:'High',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'https://google.com/search?q=45+Pineapple+St+Brooklyn+rental',sources:['RentCast'],floor:4,price_min_seen:6800,price_max_seen:6800,notes:''},
-  {id:'d2',address_normalized:'220 N 10th St',unit:'3B',neighborhood:'williamsburg',price:7100,bedrooms:2,bathrooms:2,sqft:1420,score_tier:'🔥 Must Tour',score_raw:81,heat:'🔥 Hot',status:'new',commute_minutes:28,in_unit_laundry:true,dishwasher:true,parking:true,storage:false,gym:true,natural_light_confidence:'High',first_seen:new Date().toISOString().slice(0,10),last_seen:new Date().toISOString().slice(0,10),primary_url:'https://google.com/search?q=220+N+10th+St+Williamsburg+rental',sources:['RentCast'],floor:3,price_min_seen:7100,price_max_seen:7100,notes:''},
-  {id:'d3',address_normalized:'150 Joralemon St',unit:'7C',neighborhood:'brooklyn heights',price:7900,bedrooms:3,bathrooms:2,sqft:1650,score_tier:'👍 Strong',score_raw:72,heat:'⏳ Normal',status:'new',commute_minutes:32,in_unit_laundry:true,dishwasher:true,parking:false,storage:true,gym:false,natural_light_confidence:'High',first_seen:'2025-04-05',last_seen:new Date().toISOString().slice(0,10),primary_url:'https://google.com/search?q=150+Joralemon+St+Brooklyn+rental',sources:['RentCast'],floor:7,price_min_seen:7900,price_max_seen:7900,notes:''},
-];
+function capNeigh(n){
+  return n.split(' ').filter(Boolean).map(function(w){return w[0].toUpperCase()+w.slice(1)}).join(' ');
+}
+function daysAgo(d){
+  if(!d) return 999;
+  const dt=new Date(d); dt.setHours(0,0,0,0);
+  return Math.floor((today-dt)/86400000);
+}
+function fmtDays(d){
+  const n=daysAgo(d);
+  if(n===0) return 'Today';
+  if(n===1) return '1 day ago';
+  return `${n} days ago`;
+}
+function set(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
 
 // ── Boot ──────────────────────────────────────────────────────
-if(SUPABASE_ANON_KEY==='REPLACE_SUPABASE_KEY'){
-  all=DEMO;updateStats();render();
-  document.getElementById('ts').textContent='Demo mode';
-}else{
-  load();
-  setInterval(load,5*60*1000);
-}
+load();
+setInterval(load, 5*60*1000);
 </script>
 </body>
 </html>
