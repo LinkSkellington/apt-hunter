@@ -39,7 +39,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .tab.on{color:var(--fire);border-bottom-color:var(--fire)}
 .tab.fav-tab.on{color:var(--star);border-bottom-color:var(--star)}
 .tab.rev-tab.on{color:var(--purple);border-bottom-color:var(--purple)}
-.cnt{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);padding:2px 7px;border-radius:20px;margin-left:6px;color:var(--muted2);font-weight:400}
+.cnt{font-family:'DM Mono',monospace;font-size:13px;background:var(--bg3);padding:3px 9px;border-radius:20px;margin-left:6px;color:var(--text);font-weight:700}
 .tab.on .cnt{background:var(--fire-bg);color:var(--fire)}
 .tab.fav-tab.on .cnt{background:var(--star-bg);color:var(--star)}
 .tab.rev-tab.on .cnt{background:var(--purple-bg);color:var(--purple)}
@@ -168,21 +168,21 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 <div class="nav">
   <div class="tab fav-tab" id="t-fav" onclick="sw('fav')">Favorites ⭐ <span class="cnt" id="c-fav">0</span></div>
   <div class="tab rev-tab" id="t-rev" onclick="sw('rev')">For Review 👀 <span class="cnt" id="c-rev">0</span></div>
-  <div class="tab" id="t-new" onclick="sw('new')">New Today 🗓 <span class="cnt" id="c-new">0</span></div>
-  <div class="tab" id="t-hot" onclick="sw('hot')">Just Listed 🆕 <span class="cnt" id="c-hot">0</span></div>
+  <div class="tab" id="t-new" onclick="sw('new')">New Today <span class="cnt" id="c-new">0</span></div>
+  <div class="tab" id="t-hot" onclick="sw('hot')">Just Listed <span class="cnt" id="c-hot">0</span></div>
   <div class="tab on" id="t-top" onclick="sw('top')">Top Picks 🔥 <span class="cnt" id="c-top">0</span></div>
-  <div class="tab" id="t-str" onclick="sw('str')">So Close 💪 <span class="cnt" id="c-str">0</span></div>
-  <div class="tab" id="t-all" onclick="sw('all')">All Active 📋 <span class="cnt" id="c-all">0</span></div>
+  <div class="tab" id="t-str" onclick="sw('str')">So Close <span class="cnt" id="c-str">0</span></div>
+  <div class="tab" id="t-all" onclick="sw('all')">All Active <span class="cnt" id="c-all">0</span></div>
 </div>
 
 <div class="page">
   <div class="stats">
     <div class="stat"><div class="stat-label">Favorites</div><div class="stat-val star" id="s-fav">—</div><div class="stat-hint">Starred</div></div>
-    <div class="stat"><div class="stat-label">For Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Queued for wife</div></div>
+    <div class="stat"><div class="stat-label">For Review</div><div class="stat-val purple" id="s-rev">—</div><div class="stat-hint">Review for Tour</div></div>
     <div class="stat"><div class="stat-label">Top Picks 🔥</div><div class="stat-val fire" id="s-top">—</div><div class="stat-hint">All must-have criteria</div></div>
-    <div class="stat"><div class="stat-label">Just Listed 🆕</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">Fresh + meets criteria</div></div>
-    <div class="stat"><div class="stat-label">So Close 💪</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Almost there</div></div>
-    <div class="stat"><div class="stat-label">New Today 🗓</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
+    <div class="stat"><div class="stat-label">Just Listed</div><div class="stat-val fire" id="s-hot">—</div><div class="stat-hint">≤7 days + meets criteria</div></div>
+    <div class="stat"><div class="stat-label">So Close</div><div class="stat-val gold" id="s-strong">—</div><div class="stat-hint">Meets some criteria</div></div>
+    <div class="stat"><div class="stat-label">New Today</div><div class="stat-val blue" id="s-new">—</div><div class="stat-hint">Since last scrape</div></div>
     <div class="stat"><div class="stat-label">Total active</div><div class="stat-val" id="s-total">—</div><div class="stat-hint">All listings</div></div>
   </div>
 
