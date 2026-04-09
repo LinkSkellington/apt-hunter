@@ -356,7 +356,8 @@ function updateStats(){
   const soClose  = active.filter(l=>(l.score_raw||0)>=45&&(l.score_raw||0)<65);
   const hot      = active.filter(l=>l.heat==='🔥 Hot'&&(l.score_raw||0)>=45);
   const newR     = lastRunDate ? active.filter(l=>l.first_seen===lastRunDate) : active.filter(l=>daysAgo(l.first_seen)<=1);
-  const favs     = active.filter(l=>favorites.has(l.id));
+  // Favorites counts all starred listings including reviewed ones
+  const favs = all.filter(l=>favorites.has(l.id)&&!disliked.has(l.id)&&l.status!=='rejected');
   // reviewed and rejected count from ALL listings (not filtered active)
   const revCount = all.filter(l=>reviewed.has(l.id)&&!disliked.has(l.id)).length;
   const rejCount = rejectedLocal.length;
@@ -444,7 +445,8 @@ function render(){
     main.innerHTML=html; return;
   }
   if(tab==='fav'){
-    const favRows=all.filter(l=>favorites.has(l.id)&&l.status!=='rejected');
+    // Favorites shows ALL starred listings — even if also in For Review
+    const favRows=all.filter(l=>favorites.has(l.id)&&l.status!=='rejected'&&!disliked.has(l.id));
     main.innerHTML=section('⭐ Favorites',favRows,'No favorites yet — star a listing to add it here');
     return;
   }
