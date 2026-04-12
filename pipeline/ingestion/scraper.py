@@ -50,7 +50,7 @@ SEARCH_AREAS = [
     ("11101", "NY", "hunters point lic"),
 ]
 
-MAX_PRICE = 8000
+MAX_PRICE = 9000
 MIN_BEDS  = 2
 MIN_BATHS = 2.0
 MIN_SQFT  = 1200

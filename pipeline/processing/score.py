@@ -124,7 +124,7 @@ def _score_hard(l: dict) -> tuple[int, bool]:
     ok = True
 
     price = l.get("price", 0) or 0
-    if price > 8000:
+    if price > 9000:
         pts -= 30; ok = False
 
     beds = l.get("bedrooms")
