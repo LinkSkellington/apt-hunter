@@ -57,9 +57,11 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .search{background:var(--bg2);border:1.5px solid var(--border);padding:9px 14px;border-radius:8px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;width:240px;box-shadow:var(--shadow)}
 .search::placeholder{color:var(--muted2)}
 .search:focus{border-color:var(--blue)}
-.chip{background:var(--bg2);border:1.5px solid var(--border);padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s;user-select:none;box-shadow:var(--shadow)}
+.chip{background:var(--bg2);border:1.5px solid var(--border);padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s;user-select:none;box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:6px}
 .chip:hover{border-color:var(--border2);color:var(--text)}
 .chip.on{border-color:var(--fire);color:var(--fire);background:var(--fire-bg)}
+.chip-count{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;background:var(--bg3);padding:1px 6px;border-radius:10px;color:var(--muted2)}
+.chip.on .chip-count{background:var(--fire-bg);color:var(--fire)}
 /* Section */
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:4px}
 .sec-title{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--text)}
@@ -245,14 +247,14 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 
   <div class="filters">
     <input class="search" type="text" placeholder="Search address or neighborhood…" id="q" oninput="render()"/>
-    <div class="chip on" id="fn-all" onclick="setNeigh('all')">All areas</div>
-    <div class="chip" id="fn-bh"  onclick="setNeigh('brooklyn heights')">Brooklyn Hts</div>
-    <div class="chip" id="fn-wb"  onclick="setNeigh('williamsburg')">Williamsburg</div>
-    <div class="chip" id="fn-cg"  onclick="setNeigh('carroll gardens')">Carroll Gdns</div>
-    <div class="chip" id="fn-ps"  onclick="setNeigh('park slope')">Park Slope</div>
-    <div class="chip" id="fn-gp"  onclick="setNeigh('greenpoint')">Greenpoint</div>
-    <div class="chip" id="fn-hob" onclick="setNeigh('hoboken')">Hoboken</div>
-    <div class="chip" id="fn-lic" onclick="setNeigh('hunters point lic')">Hunters Point LIC</div>
+    <div class="chip on" id="fn-all" onclick="setNeigh('all')">All areas <span class="chip-count" id="nc-all">—</span></div>
+    <div class="chip" id="fn-bh"  onclick="setNeigh('brooklyn heights')">Brooklyn Hts <span class="chip-count" id="nc-bh">—</span></div>
+    <div class="chip" id="fn-wb"  onclick="setNeigh('williamsburg')">Williamsburg <span class="chip-count" id="nc-wb">—</span></div>
+    <div class="chip" id="fn-cg"  onclick="setNeigh('carroll gardens')">Carroll Gdns <span class="chip-count" id="nc-cg">—</span></div>
+    <div class="chip" id="fn-ps"  onclick="setNeigh('park slope')">Park Slope <span class="chip-count" id="nc-ps">—</span></div>
+    <div class="chip" id="fn-gp"  onclick="setNeigh('greenpoint')">Greenpoint <span class="chip-count" id="nc-gp">—</span></div>
+    <div class="chip" id="fn-hob" onclick="setNeigh('hoboken')">Hoboken <span class="chip-count" id="nc-hob">—</span></div>
+    <div class="chip" id="fn-lic" onclick="setNeigh('hunters point lic')">Hunters Point LIC <span class="chip-count" id="nc-lic">—</span></div>
     <div class="chip" id="fc"     onclick="toggleCommute()">≤ 45 min commute</div>
   </div>
 
@@ -380,6 +382,28 @@ function updateStats(){
   set('c-hot',  hot.length);
   set('c-all',  active.length);
   set('c-rej',  rejCount);
+
+  // Update neighborhood chips with live counts
+  updateNeighCounts();
+}
+
+function updateNeighCounts(){
+  // Count active listings (not rejected, not disliked, not reviewed) per neighborhood
+  const base = all.filter(l=>l.status!=='rejected'&&!disliked.has(l.id)&&!reviewed.has(l.id));
+  const neighMap = {
+    'nc-all': base.length,
+    'nc-bh':  base.filter(l=>(l.neighborhood||'').toLowerCase()==='brooklyn heights').length,
+    'nc-wb':  base.filter(l=>(l.neighborhood||'').toLowerCase()==='williamsburg').length,
+    'nc-cg':  base.filter(l=>(l.neighborhood||'').toLowerCase()==='carroll gardens').length,
+    'nc-ps':  base.filter(l=>(l.neighborhood||'').toLowerCase()==='park slope').length,
+    'nc-gp':  base.filter(l=>(l.neighborhood||'').toLowerCase()==='greenpoint').length,
+    'nc-hob': base.filter(l=>(l.neighborhood||'').toLowerCase()==='hoboken').length,
+    'nc-lic': base.filter(l=>(l.neighborhood||'').toLowerCase()==='hunters point lic').length,
+  };
+  for(const [id, count] of Object.entries(neighMap)){
+    const el=document.getElementById(id);
+    if(el) el.textContent=count;
+  }
 }
 
 // ── Tabs ──────────────────────────────────────────────────────
