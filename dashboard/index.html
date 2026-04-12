@@ -252,6 +252,7 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
     <div class="chip" id="fn-ps"  onclick="setNeigh('park slope')">Park Slope</div>
     <div class="chip" id="fn-gp"  onclick="setNeigh('greenpoint')">Greenpoint</div>
     <div class="chip" id="fn-hob" onclick="setNeigh('hoboken')">Hoboken</div>
+    <div class="chip" id="fn-lic" onclick="setNeigh('hunters point lic')">Hunters Point LIC</div>
     <div class="chip" id="fc"     onclick="toggleCommute()">≤ 45 min commute</div>
   </div>
 
@@ -407,7 +408,7 @@ function sw(t){ swCard(t); }
 function setNeigh(n){
   neigh=n;
   document.querySelectorAll('[id^="fn-"]').forEach(el=>el.classList.remove('on'));
-  const map={'all':'fn-all','brooklyn heights':'fn-bh','williamsburg':'fn-wb','carroll gardens':'fn-cg','park slope':'fn-ps','greenpoint':'fn-gp','hoboken':'fn-hob'};
+  const map={'all':'fn-all','brooklyn heights':'fn-bh','williamsburg':'fn-wb','carroll gardens':'fn-cg','park slope':'fn-ps','greenpoint':'fn-gp','hoboken':'fn-hob','hunters point lic':'fn-lic'};
   if(map[n]) document.getElementById(map[n])?.classList.add('on');
   render();
 }

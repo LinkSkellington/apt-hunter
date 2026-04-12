@@ -47,6 +47,7 @@ SEARCH_AREAS = [
     ("11215", "NY", "park slope"),
     ("11231", "NY", "carroll gardens"),
     ("07030", "NJ", "hoboken"),
+    ("11101", "NY", "hunters point lic"),
 ]
 
 MAX_PRICE = 8000
@@ -186,7 +187,7 @@ def _normalize(item: dict, neighborhood: str) -> Optional[dict]:
     return {
         "source":          "rentcast",
         "rentcast_id":     item.get("id", ""),
-        "primary_url":     _make_search_url(address),
+        "primary_url":     item.get("url") or item.get("listingUrl") or "",
         "address":         address,
         "unit":            unit,
         "price":           price,
@@ -211,10 +212,7 @@ def _normalize(item: dict, neighborhood: str) -> Optional[dict]:
         "scraped_at":      datetime.utcnow().isoformat(),
     }
 
-def _make_search_url(address: str) -> str:
-    import urllib.parse
-    q = urllib.parse.quote_plus(address.strip() + " rental NYC")
-    return f"https://www.google.com/search?q={q}"
+
 def _safe_int(val) -> Optional[int]:
     try:
         return int(float(str(val).replace(",", "")))

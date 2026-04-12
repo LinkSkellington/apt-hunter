@@ -50,6 +50,7 @@ _NEIGH_SCORE: dict[str, int] = {
     "gowanus": 8,
     "hoboken": 8,
     "jersey city heights": 5,
+    "hunters point lic": 20,
 }
 
 # Estimated commute minutes from neighborhood to Midtown by transit
