@@ -38,11 +38,15 @@ jobs:
 
       - name: Run pipeline
         working-directory: pipeline
-        env:
+                  SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ALERT_EMAIL:          ${{ secrets.ALERT_EMAIL }}
+          ALERT_EMAIL_PASSWORD: ${{ secrets.ALERT_EMAIL_PASSWORD }}env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           ALERT_EMAIL:          ${{ secrets.ALERT_EMAIL }}
           ALERT_EMAIL_PASSWORD: ${{ secrets.ALERT_EMAIL_PASSWORD }}
+	RENTCAST_API_KEY:     ${{ secrets.RENTCAST_API_KEY }}
         run: |
           ARGS=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
