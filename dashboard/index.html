@@ -376,12 +376,38 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 let all=[], tab='all', neigh='all', commuteFilter=false, currentPanelId=null, lastRunDate=null;
 
 // ── User identity ─────────────────────────────────────────────
-// Stored in localStorage — only the name, not listing state
+// Only asked when user tries to perform an action — not on load
 let currentUser = localStorage.getItem('apt_user') || '';
-if(!currentUser){
-  const name = prompt('Welcome to Apt Hunter! Who are you?\n\nEnter your name (e.g. Alex or Liz):');
-  currentUser = (name||'').trim() || 'User';
-  localStorage.setItem('apt_user', currentUser);
+
+// Returns true if identity confirmed, false if skipped
+function ensureUser(){
+  if(currentUser) return true;
+  return new Promise(resolve=>{
+    // Show identity modal
+    const modal = document.createElement('div');
+    modal.id = 'id-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(30,24,20,.55);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+    modal.innerHTML = `
+      <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:28px 32px;max-width:340px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);text-align:center">
+        <div style="font-family:'Lora',serif;font-size:20px;font-weight:600;margin-bottom:8px">Who are you?</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:20px">To save favorites, reviews and dislikes across devices</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button onclick="setUser('Alex')" style="background:var(--fire-bg);border:1.5px solid var(--fire);color:var(--fire);border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Alex</button>
+          <button onclick="setUser('Liz')" style="background:var(--purple-bg);border:1.5px solid var(--purple);color:var(--purple);border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Liz</button>
+          <button onclick="setUser('')" style="background:var(--bg3);border:1.5px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif">Just browsing — skip</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    window._resolveUser = resolve;
+  });
+}
+
+function setUser(name){
+  const modal = document.getElementById('id-modal');
+  if(modal) modal.remove();
+  currentUser = name;
+  if(name) localStorage.setItem('apt_user', name);
+  if(window._resolveUser){ window._resolveUser(!!name); window._resolveUser=null; }
 }
 
 // ── State derived from Supabase fields (populated after load) ──
@@ -807,7 +833,9 @@ function undoDislike(){
   updateStats(); render();
 }
 
-function dislikeCard(id, btnEl){
+async function dislikeCard(id, btnEl){
+  const ok = await ensureUser();
+  if(ok === false) return;
   const l=all.find(x=>x.id===id); if(!l) return;
   const name=(l.address_normalized||'listing').split(',')[0];
   // Animate card sliding out
@@ -859,13 +887,17 @@ function undoDislikeById(id){
   updateStats(); render();
 }
 
-function toggleFav(id){
+async function toggleFav(id){
+  const ok = await ensureUser();
+  if(ok === false) return;  // skipped identity — don't save
   const newVal = !favorites.has(id);
   saveFavorite(id, newVal).catch(e=>console.warn('fav save error',e));
   updateStats(); render();
   updatePanelButtons(id);
 }
-function toggleRev(id){
+async function toggleRev(id){
+  const ok = await ensureUser();
+  if(ok === false) return;
   const newVal = !reviewed.has(id);
   saveReview(id, newVal, currentUser).catch(e=>console.warn('rev save error',e));
   updateStats(); render();
@@ -874,7 +906,9 @@ function toggleRev(id){
 function toggleFavPanel(){ if(currentPanelId) toggleFav(currentPanelId); }
 function toggleRevPanel(){  if(currentPanelId) toggleRev(currentPanelId); }
 
-function dislikeFromPanel(){
+async function dislikeFromPanel(){
+  const ok = await ensureUser();
+  if(ok === false) return;
   if(!currentPanelId) return;
   const id=currentPanelId;
   const l=all.find(x=>x.id===id);
