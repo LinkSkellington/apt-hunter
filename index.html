@@ -375,32 +375,62 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 // ── State ─────────────────────────────────────────────────────
 let all=[], tab='all', neigh='all', commuteFilter=false, currentPanelId=null, lastRunDate=null;
 
-// Favorites + Review stored in localStorage — persist across sessions
-let favorites = new Set(JSON.parse(localStorage.getItem('apt_favorites')||'[]'));
-let reviewed  = new Set(JSON.parse(localStorage.getItem('apt_reviewed')||'[]'));
-let disliked  = new Set(JSON.parse(localStorage.getItem('apt_disliked')||'[]'));
-// Track when each listing was disliked (for 12-day expiry)
-let dislikedAt = JSON.parse(localStorage.getItem('apt_disliked_at')||'{}');
-
-function saveFavorites(){ localStorage.setItem('apt_favorites', JSON.stringify([...favorites])); }
-function saveReviewed(){  localStorage.setItem('apt_reviewed',  JSON.stringify([...reviewed]));  }
-function saveDisliked(){
-  localStorage.setItem('apt_disliked',    JSON.stringify([...disliked]));
-  localStorage.setItem('apt_disliked_at', JSON.stringify(dislikedAt));
+// ── User identity ─────────────────────────────────────────────
+// Stored in localStorage — only the name, not listing state
+let currentUser = localStorage.getItem('apt_user') || '';
+if(!currentUser){
+  const name = prompt('Welcome to Apt Hunter! Who are you?\n\nEnter your name (e.g. Alex or Liz):');
+  currentUser = (name||'').trim() || 'User';
+  localStorage.setItem('apt_user', currentUser);
 }
 
-// Purge disliked listings older than 12 days on load
-function purgeOldDislikes(){
-  const cutoff = Date.now() - 12*24*60*60*1000;
-  let changed = false;
-  for(const id of [...disliked]){
-    if((dislikedAt[id]||0) < cutoff){
-      disliked.delete(id);
-      delete dislikedAt[id];
-      changed = true;
-    }
+// ── State derived from Supabase fields (populated after load) ──
+// These are Sets of listing IDs, built from the is_favorite/is_reviewed/is_disliked fields
+let favorites  = new Set();
+let reviewed   = new Set();
+let disliked   = new Set();
+let dislikedAt = {};  // id -> timestamp (ms) from disliked_at field
+
+// Build local Sets from loaded listing data
+function rebuildSets(){
+  favorites  = new Set(all.filter(l=>l.is_favorite).map(l=>l.id));
+  reviewed   = new Set(all.filter(l=>l.is_reviewed).map(l=>l.id));
+  disliked   = new Set(all.filter(l=>l.is_disliked).map(l=>l.id));
+  dislikedAt = {};
+  all.filter(l=>l.is_disliked&&l.disliked_at).forEach(l=>{
+    dislikedAt[l.id] = new Date(l.disliked_at).getTime();
+  });
+}
+
+// Write-through helpers — update Supabase immediately
+async function saveFavorite(id, val){
+  const l=all.find(x=>x.id===id); if(l) l.is_favorite=val;
+  if(val) favorites.add(id); else favorites.delete(id);
+  await sbPatch('listings', id, {is_favorite: val});
+}
+async function saveReview(id, val, reviewer){
+  const l=all.find(x=>x.id===id); if(l){ l.is_reviewed=val; l.reviewer_name=reviewer||''; }
+  if(val) reviewed.add(id); else reviewed.delete(id);
+  await sbPatch('listings', id, {is_reviewed: val, reviewer_name: val ? (reviewer||currentUser) : ''});
+}
+async function saveDislike(id, val){
+  const l=all.find(x=>x.id===id);
+  const ts = val ? new Date().toISOString() : null;
+  if(l){ l.is_disliked=val; l.disliked_at=ts; }
+  if(val){ disliked.add(id); dislikedAt[id]=Date.now(); }
+  else { disliked.delete(id); delete dislikedAt[id]; }
+  await sbPatch('listings', id, {is_disliked: val, disliked_at: ts});
+}
+
+// Purge disliked listings older than 12 days — runs after load
+async function purgeOldDislikes(){
+  const cutoff = new Date(Date.now() - 12*24*60*60*1000).toISOString();
+  const stale = all.filter(l=>l.is_disliked && l.disliked_at && l.disliked_at < cutoff);
+  for(const l of stale){
+    await sbPatch('listings', l.id, {is_disliked: false, disliked_at: null});
+    l.is_disliked=false; l.disliked_at=null;
   }
-  if(changed) saveDisliked();
+  if(stale.length) rebuildSets();
 }
 
 const today = new Date(); today.setHours(0,0,0,0);
@@ -425,14 +455,16 @@ async function load(){
   const btn=document.getElementById('refresh-btn');
   btn.textContent='↻ Loading…';
   document.getElementById('ts').textContent='Refreshing…';
-  purgeOldDislikes();
   try{
     const fields='id,address_normalized,unit,neighborhood,price,price_min_seen,price_max_seen,'+
       'bedrooms,bathrooms,sqft,floor,is_ground_floor,in_unit_laundry,dishwasher,parking,storage,gym,'+
       'natural_light_confidence,commute_minutes,commute_ok,primary_url,source_urls,sources,'+
-      'building_name,score_raw,score_tier,heat,status,notes,first_seen,last_seen';
+      'building_name,score_raw,score_tier,heat,status,notes,first_seen,last_seen,'+
+      'is_favorite,is_reviewed,reviewer_name,is_disliked,disliked_at';
     // Load ALL non-rejected listings — no score_tier filter
     all = await sbGet('listings', fields, 'status=neq.rejected&order=score_raw.desc&limit=500');
+    rebuildSets();
+    await purgeOldDislikes();
     // Detect last run date
     const dates=all.map(l=>l.first_seen).filter(Boolean).sort().reverse();
     if(dates.length) lastRunDate=dates[0];
@@ -573,8 +605,8 @@ function render(){
     return;
   }
   if(tab==='rev'){
-    const revRows=all.filter(l=>reviewed.has(l.id)&&l.status!=='rejected');
-    main.innerHTML=section('👀 Sent for Review',revRows,'No listings sent for review yet — click 👀 on any listing');
+    const revRows=all.filter(l=>reviewed.has(l.id)&&l.status!=='rejected').sort((a,b)=>(a.reviewer_name||'').localeCompare(b.reviewer_name||''));
+    main.innerHTML=section('👀 For Review',revRows,'No listings sent for review yet — click 👀 on any listing');
     return;
   }
   if(tab==='top'){
@@ -679,7 +711,7 @@ function card(l){
   const tierCls={'🔥 Must Tour':'must','👍 Strong':'strong','🤔 Backup':'backup','❌ Skip':'skip'}[l.score_tier]||'backup';
   const tierBadge={'🔥 Must Tour':'<span class="badge b-fire">Must Tour</span>','👍 Strong':'<span class="badge b-gold">Strong</span>','🤔 Backup':'<span class="badge b-blue">Backup</span>'}[l.score_tier]||'';
   const heatBadge=l.heat==='🔥 Hot'?'<span class="badge b-hot">🔥 Hot</span>':l.heat==='🧊 Stale'?'<span class="badge b-ice">Stale</span>':'';
-  const revBadge=isRev?'<span class="badge b-purple">👀 Review</span>':'';
+  const revBadge=isRev?`<span class="badge b-purple">👀 ${l.reviewer_name?l.reviewer_name+' Review Needed':'Review Needed'}</span>`:'';
   const n=l.neighborhood||'';
   const neighPill=n?`<span class="neigh-pill">${capNeigh(n)}</span>`:'';
   const cm=l.commute_minutes;
@@ -770,9 +802,7 @@ function clearToast(){
 function undoDislike(){
   if(!pendingDislikeId) return;
   const id=pendingDislikeId;
-  disliked.delete(id);
-  delete dislikedAt[id];
-  saveDisliked();
+  saveDislike(id, false).catch(e=>console.warn('undo error',e));
   clearToast();
   updateStats(); render();
 }
@@ -785,12 +815,9 @@ function dislikeCard(id, btnEl){
   if(cardEl){
     cardEl.classList.add('sliding-out');
     setTimeout(()=>{
-      disliked.add(id);
-      dislikedAt[id]=Date.now();
-      saveDisliked();
-      // Remove from favorites/review if present
-      favorites.delete(id); saveFavorites();
-      reviewed.delete(id);  saveReviewed();
+      saveDislike(id, true).catch(e=>console.warn('dislike error',e));
+      saveFavorite(id, false).catch(()=>{});
+      saveReview(id, false, '').catch(()=>{});
       updateStats(); render();
       showUndoToast(id, name);
     }, 480);
@@ -828,20 +855,20 @@ function cardRejected(l){
 }
 
 function undoDislikeById(id){
-  disliked.delete(id);
-  delete dislikedAt[id];
-  saveDisliked();
+  saveDislike(id, false).catch(e=>console.warn('undo error',e));
   updateStats(); render();
 }
 
 function toggleFav(id){
-  if(favorites.has(id)) favorites.delete(id); else favorites.add(id);
-  saveFavorites(); updateStats(); render();
+  const newVal = !favorites.has(id);
+  saveFavorite(id, newVal).catch(e=>console.warn('fav save error',e));
+  updateStats(); render();
   updatePanelButtons(id);
 }
 function toggleRev(id){
-  if(reviewed.has(id)) reviewed.delete(id); else reviewed.add(id);
-  saveReviewed(); updateStats(); render();
+  const newVal = !reviewed.has(id);
+  saveReview(id, newVal, currentUser).catch(e=>console.warn('rev save error',e));
+  updateStats(); render();
   updatePanelButtons(id);
 }
 function toggleFavPanel(){ if(currentPanelId) toggleFav(currentPanelId); }
@@ -855,11 +882,9 @@ function dislikeFromPanel(){
   closePanel();
   // Small delay so panel closes before slide animation
   setTimeout(()=>{
-    disliked.add(id);
-    dislikedAt[id]=Date.now();
-    saveDisliked();
-    favorites.delete(id); saveFavorites();
-    reviewed.delete(id);  saveReviewed();
+    saveDislike(id, true).catch(e=>console.warn('dislike error',e));
+    saveFavorite(id, false).catch(()=>{});
+    saveReview(id, false, '').catch(()=>{});
     updateStats(); render();
     showUndoToast(id, name);
   }, 200);
@@ -897,7 +922,7 @@ function openPanel(id){
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       ${tierBadge}
       ${l.heat==='🔥 Hot'?'<span class="badge b-hot" style="font-size:13px;padding:5px 12px">🔥 Hot</span>':''}
-      ${reviewed.has(id)?'<span class="badge b-purple" style="font-size:13px;padding:5px 12px">👀 For Review</span>':''}
+      ${reviewed.has(id)?`<span class="badge b-purple" style="font-size:13px;padding:5px 12px">👀 ${(all.find(x=>x.id===id)||{}).reviewer_name?((all.find(x=>x.id===id)||{}).reviewer_name+' Review Needed'):'Review Needed'}</span>`:''}
     </div>
     <div class="panel-addr">${l.address_normalized||'—'}${l.unit?' #'+l.unit:''}</div>
     <div class="panel-neigh">${nd}</div>
