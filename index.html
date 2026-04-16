@@ -361,6 +361,7 @@ const SUPABASE_ANON_KEY='sb_publishable_9knEOLQSWF4PW6GL2Mye8Q_CXTvkDNC';
 
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
+  <div id="swipe-hint" style="display:none;text-align:center;padding:6px 0 2px;color:var(--muted2);font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.04em">← swipe right to go back</div>
   <div class="panel-actions">
     <button class="panel-close" onclick="closePanel()">← Back</button>
     <button class="panel-action-btn" id="panel-fav-btn" onclick="toggleFavPanel()">☆ Favorite</button>
@@ -933,6 +934,69 @@ function closePanel(){
   currentPanelId=null;
 }
 
+// ── Swipe to close panel (mobile) ────────────────────────────
+(function(){
+  let startX=0, startY=0, isDragging=false;
+  const SWIPE_THRESHOLD = 80;   // px right to trigger close
+  const ANGLE_LIMIT     = 40;   // max degrees off horizontal
+
+  function onTouchStart(e){
+    const panel=document.getElementById('panel');
+    if(!panel.classList.contains('open')) return;
+    startX=e.touches[0].clientX;
+    startY=e.touches[0].clientY;
+    isDragging=true;
+    panel.style.transition='none';
+  }
+
+  function onTouchMove(e){
+    if(!isDragging) return;
+    const panel=document.getElementById('panel');
+    if(!panel.classList.contains('open')) return;
+    const dx=e.touches[0].clientX - startX;
+    const dy=e.touches[0].clientY - startY;
+    // Only track horizontal-ish swipes
+    const angle=Math.abs(Math.atan2(dy, dx) * 180/Math.PI);
+    if(angle > ANGLE_LIMIT && angle < (180-ANGLE_LIMIT)){ isDragging=false; return; }
+    if(dx > 0){
+      // Only allow right swipe (back gesture)
+      panel.style.transform=`translateX(${dx}px)`;
+      panel.style.opacity=Math.max(0, 1 - dx/300);
+      // Prevent page scroll while swiping
+      e.preventDefault();
+    }
+  }
+
+  function onTouchEnd(e){
+    if(!isDragging) return;
+    isDragging=false;
+    const panel=document.getElementById('panel');
+    if(!panel.classList.contains('open')) return;
+    const dx=e.changedTouches[0].clientX - startX;
+    panel.style.transition='transform .25s ease, opacity .25s ease';
+    if(dx > SWIPE_THRESHOLD){
+      // Complete the swipe — animate out then close
+      panel.style.transform='translateX(100%)';
+      panel.style.opacity='0';
+      setTimeout(()=>{
+        panel.style.transform='';
+        panel.style.opacity='';
+        panel.style.transition='';
+        closePanel();
+      }, 250);
+    } else {
+      // Snap back
+      panel.style.transform='';
+      panel.style.opacity='';
+      setTimeout(()=>{ panel.style.transition=''; }, 250);
+    }
+  }
+
+  document.addEventListener('touchstart', onTouchStart, {passive:true});
+  document.addEventListener('touchmove',  onTouchMove,  {passive:false});
+  document.addEventListener('touchend',   onTouchEnd,   {passive:true});
+})();
+
 // ── Write-back ────────────────────────────────────────────────
 async function setStatus(id,status){
   const l=all.find(x=>x.id===id); if(l) l.status=status;
@@ -969,8 +1033,15 @@ function fmtDays(d){
 function set(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
 
 // ── Boot ──────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────────────
 load();
 setInterval(load, 5*60*1000);
+
+// Show swipe hint only on touch devices
+if('ontouchstart' in window){
+  const hint=document.getElementById('swipe-hint');
+  if(hint) hint.style.display='block';
+}
 </script>
 </body>
 </html>
