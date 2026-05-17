@@ -7,7 +7,7 @@ Apt Hunter is a fully automated apartment search tool that pulls live NYC rental
 
 Built for personal use during an apartment search in Brooklyn. Architecture is general-purpose and could extend to property management, portfolio monitoring, or market research.
 
-![Apt Hunter Dashboard](assets:/Apt_Hunter_Dashboard.png)
+![Apt Hunter Dashboard](assets/Apt_Hunter_Dashboard.png)
 
 ---
 
